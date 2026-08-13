@@ -6,6 +6,9 @@ import cv2
 import tempfile
 import os
 import smtplib
+import subprocess
+import imageio_ffmpeg
+
 from email.message import EmailMessage
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -227,6 +230,7 @@ label {
     .capstone-text {
         font-size: 19px !important;
     }
+
 }
 
 </style>
@@ -246,6 +250,7 @@ def load_model():
     )
 
     if not os.path.exists(model_path):
+
         raise FileNotFoundError(
             "best.pt file not found in the same folder as app.py"
         )
@@ -260,6 +265,7 @@ def load_model():
 def get_location():
 
     try:
+
         location = st.secrets["LOCATION"]
 
         if location:
@@ -373,6 +379,7 @@ def generate_alert():
         ).total_seconds()
 
         if difference < 300:
+
             return
 
     st.session_state.last_alert_time = current_dt
@@ -380,6 +387,7 @@ def generate_alert():
     email_sent = send_email_alert()
 
     if email_sent:
+
         st.success(
             "📧 Alert email sent successfully."
         )
@@ -408,20 +416,29 @@ def extract_detections(result):
     detections = []
 
     if result.boxes is None:
+
         return detections
 
     for box in result.boxes:
 
-        class_id = int(box.cls[0])
-        confidence = float(box.conf[0])
+        class_id = int(
+            box.cls[0]
+        )
+
+        confidence = float(
+            box.conf[0]
+        )
 
         class_name = normalize_class_name(
             result.names[class_id]
         )
 
         detections.append({
+
             "class": class_name,
+
             "confidence": confidence
+
         })
 
     return detections
@@ -433,68 +450,81 @@ def extract_detections(result):
 
 def get_final_prediction(detections):
 
-    """
-    Final decision:
-
-    1. overclass with confidence >= 0.30
-       => GARBAGE OVERFLOW
-
-    2. otherwise normal detection
-       => NORMAL
-
-    3. otherwise
-       => NO CLEAR DETECTION
-    """
-
     over_detections = [
+
         d for d in detections
+
         if d["class"] in [
+
             "overclass",
             "overflow",
             "garbage overflow",
             "overflowing",
             "overflowed"
+
         ]
+
         and d["confidence"] >= 0.30
+
     ]
 
     normal_detections = [
+
         d for d in detections
+
         if d["class"] in [
+
             "normal",
             "normal bin",
             "non overflow",
             "non-overflow"
+
         ]
+
     ]
 
     if over_detections:
 
         best = max(
+
             over_detections,
+
             key=lambda x: x["confidence"]
+
         )
 
         return (
+
             "GARBAGE OVERFLOW",
+
             best["confidence"]
+
         )
 
     if normal_detections:
 
         best = max(
+
             normal_detections,
+
             key=lambda x: x["confidence"]
+
         )
 
         return (
+
             "NORMAL",
+
             best["confidence"]
+
         )
 
     return (
+
         "NO CLEAR DETECTION",
+
         0.0
+
     )
 
 
@@ -507,14 +537,20 @@ def predict_image(image, model):
     image_np = np.array(image)
 
     results = model.predict(
+
         source=image_np,
+
         conf=0.20,
+
         verbose=False
+
     )
 
     result = results[0]
 
-    detections = extract_detections(result)
+    detections = extract_detections(
+        result
+    )
 
     return result, detections
 
@@ -530,15 +566,23 @@ def display_prediction(
 ):
 
     st.markdown(
-        f'<div class="detection-box-title">{title}</div>',
+
+        f'<div class="detection-box-title">'
+        f'{title}'
+        f'</div>',
+
         unsafe_allow_html=True
+
     )
 
     annotated = result.plot()
 
     st.image(
+
         annotated,
+
         use_container_width=True
+
     )
 
     status, confidence = get_final_prediction(
@@ -550,6 +594,7 @@ def display_prediction(
     if status == "GARBAGE OVERFLOW":
 
         st.markdown(
+
             f"""
             <div class="alert-box">
 
@@ -571,7 +616,9 @@ def display_prediction(
 
             </div>
             """,
+
             unsafe_allow_html=True
+
         )
 
         generate_alert()
@@ -579,6 +626,7 @@ def display_prediction(
     elif status == "NORMAL":
 
         st.markdown(
+
             f"""
             <div class="normal-box">
 
@@ -594,14 +642,18 @@ def display_prediction(
 
             </div>
             """,
+
             unsafe_allow_html=True
+
         )
 
     else:
 
         st.warning(
+
             "⚠️ No clear garbage condition detected. "
             "Please try another image/video."
+
         )
 
     if detections:
@@ -615,8 +667,11 @@ def display_prediction(
         for detection in detections:
 
             st.write(
+
                 f"• {detection['class']} — "
+
                 f"{detection['confidence'] * 100:.2f}%"
+
             )
 
 
@@ -626,93 +681,11 @@ def display_prediction(
 
 def process_video(video_path, model):
 
-    cap = cv2.VideoCapture(video_path)
+    cap = cv2.VideoCapture(
+        video_path
+    )
 
     if not cap.isOpened():
-        return "NO CLEAR DETECTION", None, 0.0
-
-    fps = cap.get(cv2.CAP_PROP_FPS)
-
-    if fps <= 0:
-        fps = 25
-
-    total_frames = int(
-        cap.get(cv2.CAP_PROP_FRAME_COUNT)
-    )
-
-    frame_skip = max(
-        int(fps),
-        1
-    )
-
-    frame_number = 0
-
-    overflow_count = 0
-    normal_count = 0
-    detection_count = 0
-
-    best_frame = None
-    best_overflow_confidence = 0.0
-
-    progress = st.progress(0)
-
-    while True:
-
-        ret, frame = cap.read()
-
-        if not ret:
-            break
-
-        if frame_number % frame_skip == 0:
-
-            results = model.predict(
-                source=frame,
-                conf=0.20,
-                verbose=False
-            )
-
-            result = results[0]
-
-            detections = extract_detections(
-                result
-            )
-
-            status, confidence = get_final_prediction(
-                detections
-            )
-
-            if status == "GARBAGE OVERFLOW":
-
-                overflow_count += 1
-                detection_count += 1
-
-                if confidence > best_overflow_confidence:
-
-                    best_overflow_confidence = confidence
-
-                    best_frame = result.plot()
-
-            elif status == "NORMAL":
-
-                normal_count += 1
-                detection_count += 1
-
-        frame_number += 1
-
-        if total_frames > 0:
-
-            progress.progress(
-                min(
-                    frame_number / total_frames,
-                    1.0
-                )
-            )
-
-    cap.release()
-
-    progress.empty()
-
-    if detection_count == 0:
 
         return (
             "NO CLEAR DETECTION",
@@ -720,20 +693,471 @@ def process_video(video_path, model):
             0.0
         )
 
-    # If overflow appears in any sampled frame,
-    # treat the CCTV event as overflow.
+    fps = cap.get(
+        cv2.CAP_PROP_FPS
+    )
+
+    if fps <= 0:
+
+        fps = 25
+
+    width = int(
+        cap.get(
+            cv2.CAP_PROP_FRAME_WIDTH
+        )
+    )
+
+    height = int(
+        cap.get(
+            cv2.CAP_PROP_FRAME_HEIGHT
+        )
+    )
+
+    total_frames = int(
+        cap.get(
+            cv2.CAP_PROP_FRAME_COUNT
+        )
+    )
+
+    # --------------------------------------------------------
+    # Temporary output files
+    # --------------------------------------------------------
+
+    raw_output = tempfile.NamedTemporaryFile(
+
+        delete=False,
+
+        suffix=".mp4"
+
+    )
+
+    raw_output_path = raw_output.name
+
+    raw_output.close()
+
+    h264_output = tempfile.NamedTemporaryFile(
+
+        delete=False,
+
+        suffix=".mp4"
+
+    )
+
+    h264_output_path = h264_output.name
+
+    h264_output.close()
+
+    # --------------------------------------------------------
+    # Video Writer
+    # --------------------------------------------------------
+
+    fourcc = cv2.VideoWriter_fourcc(
+        *"mp4v"
+    )
+
+    writer = cv2.VideoWriter(
+
+        raw_output_path,
+
+        fourcc,
+
+        fps,
+
+        (width, height)
+
+    )
+
+    frame_number = 0
+
+    overflow_count = 0
+
+    normal_count = 0
+
+    detection_count = 0
+
+    best_overflow_confidence = 0.0
+
+    progress = st.progress(0)
+
+    # --------------------------------------------------------
+    # PROCESS EVERY FRAME
+    # --------------------------------------------------------
+
+    while True:
+
+        ret, frame = cap.read()
+
+        if not ret:
+
+            break
+
+        # YOLO prediction
+        results = model.predict(
+
+            source=frame,
+
+            conf=0.20,
+
+            verbose=False
+
+        )
+
+        result = results[0]
+
+        detections = extract_detections(
+            result
+        )
+
+        status, confidence = get_final_prediction(
+            detections
+        )
+
+        # ----------------------------------------------------
+        # COUNT DETECTIONS
+        # ----------------------------------------------------
+
+        if status == "GARBAGE OVERFLOW":
+
+            overflow_count += 1
+
+            detection_count += 1
+
+            if confidence > best_overflow_confidence:
+
+                best_overflow_confidence = confidence
+
+        elif status == "NORMAL":
+
+            normal_count += 1
+
+            detection_count += 1
+
+        # ----------------------------------------------------
+        # YOLO ANNOTATED FRAME
+        # ----------------------------------------------------
+
+        annotated_frame = result.plot()
+
+        # ----------------------------------------------------
+        # STATUS OVERLAY
+        # ----------------------------------------------------
+
+        if status == "GARBAGE OVERFLOW":
+
+            cv2.rectangle(
+
+                annotated_frame,
+
+                (10, 10),
+
+                (520, 80),
+
+                (0, 0, 255),
+
+                -1
+
+            )
+
+            cv2.putText(
+
+                annotated_frame,
+
+                "GARBAGE OVERFLOW DETECTED",
+
+                (25, 55),
+
+                cv2.FONT_HERSHEY_SIMPLEX,
+
+                0.80,
+
+                (255, 255, 255),
+
+                2,
+
+                cv2.LINE_AA
+
+            )
+
+        elif status == "NORMAL":
+
+            cv2.rectangle(
+
+                annotated_frame,
+
+                (10, 10),
+
+                (300, 80),
+
+                (0, 150, 0),
+
+                -1
+
+            )
+
+            cv2.putText(
+
+                annotated_frame,
+
+                "NORMAL",
+
+                (25, 55),
+
+                cv2.FONT_HERSHEY_SIMPLEX,
+
+                0.80,
+
+                (255, 255, 255),
+
+                2,
+
+                cv2.LINE_AA
+
+            )
+
+        else:
+
+            cv2.rectangle(
+
+                annotated_frame,
+
+                (10, 10),
+
+                (370, 80),
+
+                (80, 80, 80),
+
+                -1
+
+            )
+
+            cv2.putText(
+
+                annotated_frame,
+
+                "NO CLEAR DETECTION",
+
+                (25, 55),
+
+                cv2.FONT_HERSHEY_SIMPLEX,
+
+                0.70,
+
+                (255, 255, 255),
+
+                2,
+
+                cv2.LINE_AA
+
+            )
+
+        # ----------------------------------------------------
+        # CONFIDENCE
+        # ----------------------------------------------------
+
+        if confidence > 0:
+
+            cv2.putText(
+
+                annotated_frame,
+
+                f"Confidence: {confidence * 100:.2f}%",
+
+                (15, height - 20),
+
+                cv2.FONT_HERSHEY_SIMPLEX,
+
+                0.65,
+
+                (255, 255, 255),
+
+                2,
+
+                cv2.LINE_AA
+
+            )
+
+        # ----------------------------------------------------
+        # WRITE FRAME
+        # ----------------------------------------------------
+
+        writer.write(
+            annotated_frame
+        )
+
+        frame_number += 1
+
+        # ----------------------------------------------------
+        # PROGRESS
+        # ----------------------------------------------------
+
+        if total_frames > 0:
+
+            progress.progress(
+
+                min(
+
+                    frame_number / total_frames,
+
+                    1.0
+
+                )
+
+            )
+
+    # --------------------------------------------------------
+    # RELEASE
+    # --------------------------------------------------------
+
+    cap.release()
+
+    writer.release()
+
+    progress.empty()
+
+    # --------------------------------------------------------
+    # CONVERT TO H264
+    # --------------------------------------------------------
+
+    try:
+
+        ffmpeg_path = imageio_ffmpeg.get_ffmpeg_exe()
+
+        command = [
+
+            ffmpeg_path,
+
+            "-y",
+
+            "-i",
+
+            raw_output_path,
+
+            "-c:v",
+
+            "libx264",
+
+            "-preset",
+
+            "fast",
+
+            "-crf",
+
+            "23",
+
+            "-pix_fmt",
+
+            "yuv420p",
+
+            "-movflags",
+
+            "+faststart",
+
+            h264_output_path
+
+        ]
+
+        subprocess.run(
+
+            command,
+
+            stdout=subprocess.PIPE,
+
+            stderr=subprocess.PIPE,
+
+            check=True
+
+        )
+
+        final_video_path = h264_output_path
+
+    except Exception:
+
+        final_video_path = raw_output_path
+
+    # --------------------------------------------------------
+    # READ VIDEO BYTES
+    # --------------------------------------------------------
+
+    try:
+
+        with open(
+
+            final_video_path,
+
+            "rb"
+
+        ) as video_file:
+
+            output_video_bytes = (
+                video_file.read()
+            )
+
+    except Exception:
+
+        output_video_bytes = None
+
+    # --------------------------------------------------------
+    # CLEANUP
+    # --------------------------------------------------------
+
+    try:
+
+        if os.path.exists(
+            raw_output_path
+        ):
+
+            os.remove(
+                raw_output_path
+            )
+
+        if os.path.exists(
+            h264_output_path
+        ):
+
+            os.remove(
+                h264_output_path
+            )
+
+    except Exception:
+
+        pass
+
+    # --------------------------------------------------------
+    # FINAL RESULT
+    # --------------------------------------------------------
+
+    if detection_count == 0:
+
+        return (
+
+            "NO CLEAR DETECTION",
+
+            output_video_bytes,
+
+            0.0
+
+        )
+
     if overflow_count > 0:
 
         return (
+
             "GARBAGE OVERFLOW",
-            best_frame,
+
+            output_video_bytes,
+
             best_overflow_confidence
+
         )
 
     return (
+
         "NORMAL",
-        None,
+
+        output_video_bytes,
+
         0.0
+
     )
 
 
@@ -744,58 +1168,81 @@ def process_video(video_path, model):
 if st.session_state.page == "home":
 
     st.markdown(
+
         '<div class="main-title">'
         '♻️ EcoBin AI – Smart Garbage Overflow Detection'
         '</div>',
+
         unsafe_allow_html=True
+
     )
 
     left_col, right_col = st.columns(
+
         [0.38, 0.62],
+
         gap="large"
+
     )
 
     with left_col:
 
         st.markdown(
+
             '<div class="aicw-text">'
             'AI Career for Women'
             '<br>'
             '(AICW)'
             '</div>',
+
             unsafe_allow_html=True
+
         )
 
         st.markdown(
+
             '<div class="capstone-text">'
             'Capstone Project'
             '</div>',
+
             unsafe_allow_html=True
+
         )
 
         st.write("")
 
         if st.button(
+
             "🔍  PREDICT",
+
             key="predict",
+
             use_container_width=True
+
         ):
 
             st.session_state.page = "predict"
+
             st.rerun()
 
     with right_col:
 
         st.markdown(
+
             '<div class="description-title">'
             'Project Description'
             '</div>',
+
             unsafe_allow_html=True
+
         )
 
-        with st.container(border=True):
+        with st.container(
+            border=True
+        ):
 
             st.markdown(
+
                 """
                 EcoBin AI is an AI-powered Smart Garbage Overflow
                 Detection System designed to automatically identify
@@ -818,29 +1265,40 @@ if st.session_state.page == "home":
                 support faster waste-management response, and
                 improve cleanliness in public and residential areas.
                 """,
+
                 unsafe_allow_html=True
+
             )
 
     st.write("")
     st.write("")
 
     team_col, gmail_col, guide_col = st.columns(
+
         [1.25, 1.25, 0.75],
+
         gap="large"
+
     )
 
     with team_col:
 
-        with st.container(border=True):
+        with st.container(
+            border=True
+        ):
 
             st.markdown(
+
                 '<div class="card-heading">'
                 'TEAM MEMBERS'
                 '</div>',
+
                 unsafe_allow_html=True
+
             )
 
             st.markdown(
+
                 """
                 <div class="card-text">
 
@@ -851,21 +1309,29 @@ if st.session_state.page == "home":
 
                 </div>
                 """,
+
                 unsafe_allow_html=True
+
             )
 
     with gmail_col:
 
-        with st.container(border=True):
+        with st.container(
+            border=True
+        ):
 
             st.markdown(
+
                 '<div class="card-heading">'
                 'GMAIL'
                 '</div>',
+
                 unsafe_allow_html=True
+
             )
 
             st.markdown(
+
                 """
                 <div class="card-text">
 
@@ -876,48 +1342,67 @@ if st.session_state.page == "home":
 
                 </div>
                 """,
+
                 unsafe_allow_html=True
+
             )
 
     with guide_col:
 
-        with st.container(border=True):
+        with st.container(
+            border=True
+        ):
 
             st.markdown(
+
                 '<div class="card-heading">'
                 'GUIDE NAME'
                 '</div>',
+
                 unsafe_allow_html=True
+
             )
 
             st.markdown(
+
                 '<div class="card-text">'
                 'MD.Abdul Aziz'
                 '</div>',
+
                 unsafe_allow_html=True
+
             )
 
             st.write("")
 
             st.markdown(
+
                 '<div class="card-heading">'
                 'Designation'
                 '</div>',
+
                 unsafe_allow_html=True
+
             )
 
             st.markdown(
+
                 '<div class="card-text">'
                 'Trainer, Co-Lead-AICW'
                 '</div>',
+
                 unsafe_allow_html=True
+
             )
 
     st.markdown(
+
         '<div class="footer-text">'
         'EcoBin AI – Smart Garbage Overflow Detection'
         '</div>',
+
         unsafe_allow_html=True
+
     )
 
 
@@ -928,28 +1413,42 @@ if st.session_state.page == "home":
 else:
 
     st.markdown(
+
         '<div class="detect-title">'
         '♻️ EcoBin AI'
         '</div>',
+
         unsafe_allow_html=True
+
     )
 
     st.markdown(
+
         '<div class="detect-subtitle">'
         'AI-Powered Smart Garbage Overflow Detection System'
         '</div>',
+
         unsafe_allow_html=True
+
     )
 
     if st.button(
+
         "← Back to Home",
+
         key="back"
+
     ):
 
         st.session_state.page = "home"
+
         st.rerun()
 
     st.write("")
+
+    # ========================================================
+    # LOAD MODEL
+    # ========================================================
 
     try:
 
@@ -973,47 +1472,69 @@ else:
     # ========================================================
 
     st.markdown(
+
         '<div class="detection-box-title">'
         '🖼️ Image Detection'
         '</div>',
+
         unsafe_allow_html=True
+
     )
 
     image_upload_col, image_input_col, image_output_col = st.columns(
+
         3,
+
         gap="medium"
+
     )
 
     with image_upload_col:
 
-        with st.container(border=True):
+        with st.container(
+            border=True
+        ):
 
             st.markdown(
+
                 '<div class="detection-box-title">'
                 'Upload Image'
                 '</div>',
+
                 unsafe_allow_html=True
+
             )
 
             uploaded_image = st.file_uploader(
+
                 "Choose image",
+
                 type=[
+
                     "jpg",
                     "jpeg",
                     "png"
+
                 ],
+
                 key="image_upload"
+
             )
 
     with image_input_col:
 
-        with st.container(border=True):
+        with st.container(
+            border=True
+        ):
 
             st.markdown(
+
                 '<div class="detection-box-title">'
                 'Input'
                 '</div>',
+
                 unsafe_allow_html=True
+
             )
 
             input_image = None
@@ -1025,8 +1546,11 @@ else:
                 ).convert("RGB")
 
                 st.image(
+
                     input_image,
+
                     use_container_width=True
+
                 )
 
             else:
@@ -1037,47 +1561,70 @@ else:
 
     with image_output_col:
 
-        with st.container(border=True):
+        with st.container(
+            border=True
+        ):
 
             st.markdown(
+
                 '<div class="detection-box-title">'
                 'Output'
                 '</div>',
+
                 unsafe_allow_html=True
+
             )
 
             if uploaded_image and input_image is not None:
 
                 if st.button(
+
                     "🔍 Detect",
+
                     key="detect_image",
+
                     use_container_width=True
+
                 ):
 
                     with st.spinner(
+
                         "AI is analyzing the image..."
+
                     ):
 
                         result, detections = predict_image(
+
                             input_image,
+
                             model
+
                         )
 
                     st.session_state.image_result = (
+
                         result,
+
                         detections
+
                     )
 
                 if st.session_state.image_result is not None:
 
                     result, detections = (
+
                         st.session_state.image_result
+
                     )
 
                     display_prediction(
+
                         result,
+
                         detections,
+
                         "Prediction Result"
+
                     )
 
             else:
@@ -1094,42 +1641,61 @@ else:
     st.write("")
 
     st.markdown(
+
         '<div class="detection-box-title">'
         '📷 Camera Detection'
         '</div>',
+
         unsafe_allow_html=True
+
     )
 
     camera_col, camera_input_col, camera_output_col = st.columns(
+
         3,
+
         gap="medium"
+
     )
 
     with camera_col:
 
-        with st.container(border=True):
+        with st.container(
+            border=True
+        ):
 
             st.markdown(
+
                 '<div class="detection-box-title">'
                 'Camera'
                 '</div>',
+
                 unsafe_allow_html=True
+
             )
 
             camera_image = st.camera_input(
+
                 "Capture Image",
+
                 key="camera"
+
             )
 
     with camera_input_col:
 
-        with st.container(border=True):
+        with st.container(
+            border=True
+        ):
 
             st.markdown(
+
                 '<div class="detection-box-title">'
                 'Input'
                 '</div>',
+
                 unsafe_allow_html=True
+
             )
 
             camera_pil = None
@@ -1137,12 +1703,17 @@ else:
             if camera_image:
 
                 camera_pil = Image.open(
+
                     camera_image
+
                 ).convert("RGB")
 
                 st.image(
+
                     camera_pil,
+
                     use_container_width=True
+
                 )
 
             else:
@@ -1153,47 +1724,70 @@ else:
 
     with camera_output_col:
 
-        with st.container(border=True):
+        with st.container(
+            border=True
+        ):
 
             st.markdown(
+
                 '<div class="detection-box-title">'
                 'Output'
                 '</div>',
+
                 unsafe_allow_html=True
+
             )
 
             if camera_image and camera_pil is not None:
 
                 if st.button(
+
                     "🔍 Detect",
+
                     key="detect_camera",
+
                     use_container_width=True
+
                 ):
 
                     with st.spinner(
+
                         "Analyzing camera image..."
+
                     ):
 
                         result, detections = predict_image(
+
                             camera_pil,
+
                             model
+
                         )
 
                     st.session_state.camera_result = (
+
                         result,
+
                         detections
+
                     )
 
                 if st.session_state.camera_result is not None:
 
                     result, detections = (
+
                         st.session_state.camera_result
+
                     )
 
                     display_prediction(
+
                         result,
+
                         detections,
+
                         "Camera Prediction"
+
                     )
 
             else:
@@ -1211,49 +1805,80 @@ else:
     st.write("")
 
     st.markdown(
+
         '<div class="detection-box-title">'
         '🎥 Video / CCTV Detection'
         '</div>',
+
         unsafe_allow_html=True
+
     )
 
     video_upload_col, video_input_col, video_output_col = st.columns(
+
         3,
+
         gap="medium"
+
     )
+
+    # ========================================================
+    # VIDEO UPLOAD
+    # ========================================================
 
     with video_upload_col:
 
-        with st.container(border=True):
+        with st.container(
+            border=True
+        ):
 
             st.markdown(
+
                 '<div class="detection-box-title">'
                 'Upload Video'
                 '</div>',
+
                 unsafe_allow_html=True
+
             )
 
             uploaded_video = st.file_uploader(
+
                 "Choose video",
+
                 type=[
+
                     "mp4",
                     "avi",
                     "mov",
                     "mkv",
                     "mpeg"
+
                 ],
+
                 key="video_upload"
+
             )
+
+
+    # ========================================================
+    # VIDEO INPUT
+    # ========================================================
 
     with video_input_col:
 
-        with st.container(border=True):
+        with st.container(
+            border=True
+        ):
 
             st.markdown(
+
                 '<div class="detection-box-title">'
                 'Input'
                 '</div>',
+
                 unsafe_allow_html=True
+
             )
 
             if uploaded_video:
@@ -1268,52 +1893,97 @@ else:
                     "Upload a CCTV/video file."
                 )
 
+
+    # ========================================================
+    # VIDEO OUTPUT
+    # ========================================================
+
     with video_output_col:
 
-        with st.container(border=True):
+        with st.container(
+            border=True
+        ):
 
             st.markdown(
+
                 '<div class="detection-box-title">'
                 'Output'
                 '</div>',
+
                 unsafe_allow_html=True
+
             )
 
             if uploaded_video:
 
                 if st.button(
+
                     "🎥 Analyze Video",
+
                     key="detect_video",
+
                     use_container_width=True
+
                 ):
 
-                    video_bytes = uploaded_video.getvalue()
-
-                    temp_video = tempfile.NamedTemporaryFile(
-                        delete=False,
-                        suffix=".mp4"
+                    video_bytes = (
+                        uploaded_video.getvalue()
                     )
 
-                    temp_video.write(video_bytes)
+                    temp_video = tempfile.NamedTemporaryFile(
+
+                        delete=False,
+
+                        suffix=".mp4"
+
+                    )
+
+                    temp_video.write(
+                        video_bytes
+                    )
+
                     temp_video.close()
 
                     try:
 
                         with st.spinner(
-                            "AI is analyzing CCTV video..."
+
+                            "🤖 AI is analyzing CCTV video and generating output..."
+
                         ):
 
-                            video_status, best_frame, video_conf = (
-                                process_video(
-                                    temp_video.name,
-                                    model
-                                )
+                            (
+
+                                video_status,
+
+                                output_video_bytes,
+
+                                video_conf
+
+                            ) = process_video(
+
+                                temp_video.name,
+
+                                model
+
                             )
 
                         st.session_state.video_result = (
+
                             video_status,
-                            best_frame,
+
+                            output_video_bytes,
+
                             video_conf
+
+                        )
+
+                    except Exception as e:
+
+                        st.error(
+
+                            f"❌ Video processing failed: {e}"
+
                         )
 
                     finally:
@@ -1326,23 +1996,63 @@ else:
                                 temp_video.name
                             )
 
+                # =================================================
+                # DISPLAY OUTPUT VIDEO
+                # =================================================
+
                 if st.session_state.video_result is not None:
 
-                    video_status, best_frame, video_conf = (
-                        st.session_state.video_result
-                    )
+                    (
+
+                        video_status,
+
+                        output_video_bytes,
+
+                        video_conf
+
+                    ) = st.session_state.video_result
+
+                    # ------------------------------------------------
+                    # OUTPUT VIDEO
+                    # ------------------------------------------------
+
+                    if output_video_bytes is not None:
+
+                        st.markdown(
+
+                            """
+                            <div style="
+                                color:#17345f;
+                                font-size:16px;
+                                font-weight:800;
+                                margin-bottom:10px;
+                            ">
+                            🎬 AI Processed Output Video
+                            </div>
+                            """,
+
+                            unsafe_allow_html=True
+
+                        )
+
+                        st.video(
+                            output_video_bytes
+                        )
+
+                    else:
+
+                        st.error(
+                            "❌ Output video could not be generated."
+                        )
+
+                    # =================================================
+                    # OVERFLOW ALERT
+                    # =================================================
 
                     if video_status == "GARBAGE OVERFLOW":
 
-                        if best_frame is not None:
-
-                            st.image(
-                                best_frame,
-                                caption="Detected Overflow Frame",
-                                use_container_width=True
-                            )
-
                         st.markdown(
+
                             f"""
                             <div class="alert-box">
 
@@ -1364,14 +2074,21 @@ else:
 
                             </div>
                             """,
+
                             unsafe_allow_html=True
+
                         )
 
                         generate_alert()
 
+                    # =================================================
+                    # NORMAL
+                    # =================================================
+
                     elif video_status == "NORMAL":
 
                         st.markdown(
+
                             """
                             <div class="normal-box">
 
@@ -1382,14 +2099,22 @@ else:
 
                             </div>
                             """,
+
                             unsafe_allow_html=True
+
                         )
+
+                    # =================================================
+                    # NO CLEAR DETECTION
+                    # =================================================
 
                     else:
 
                         st.warning(
+
                             "⚠️ No clear garbage condition "
                             "was detected in the video."
+
                         )
 
             else:
