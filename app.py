@@ -8,10 +8,13 @@ import os
 import smtplib
 import subprocess
 import imageio_ffmpeg
+import urllib.request
+import json
 
 from email.message import EmailMessage
 from datetime import datetime
 from zoneinfo import ZoneInfo
+import streamlit.components.v1 as components
 
 
 # ============================================================
@@ -54,16 +57,25 @@ st.markdown(
     """
 <style>
 
+/* ==========================================================
+   MAIN APP
+   ========================================================== */
+
 .stApp {
-    background: #f4f6fa;
+    background: linear-gradient(
+        135deg,
+        #f8fbff 0%,
+        #f0fdf8 50%,
+        #f8fbff 100%
+    ) !important;
 }
 
 .block-container {
-    max-width: 1400px;
-    padding-top: 25px;
-    padding-bottom: 30px;
-    padding-left: 7%;
-    padding-right: 7%;
+    max-width: 1450px;
+    padding-top: 28px;
+    padding-bottom: 40px;
+    padding-left: 5%;
+    padding-right: 5%;
 }
 
 #MainMenu {
@@ -78,12 +90,18 @@ footer {
     visibility: hidden;
 }
 
+
+/* ==========================================================
+   TEXT
+   ========================================================== */
+
 .main-title,
 .detect-title {
-    color: #17345f !important;
+    color: #123b63 !important;
+    -webkit-text-fill-color: #123b63 !important;
     font-size: 32px !important;
-    font-weight: 800 !important;
-    text-align: center;
+    font-weight: 900 !important;
+    text-align: center !important;
 }
 
 .main-title {
@@ -95,183 +113,473 @@ footer {
 }
 
 .detect-subtitle {
-    color: #64748b !important;
-    text-align: center;
-    font-size: 15px;
+    color: #526579 !important;
+    -webkit-text-fill-color: #526579 !important;
+    text-align: center !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
     margin-bottom: 25px;
 }
 
 .aicw-text {
-    color: #17345f !important;
+    color: #123b63 !important;
+    -webkit-text-fill-color: #123b63 !important;
     font-size: 25px !important;
-    font-weight: 800 !important;
+    font-weight: 900 !important;
     line-height: 1.55;
 }
 
 .capstone-text {
-    color: #334155 !important;
+    color: #276749 !important;
+    -webkit-text-fill-color: #276749 !important;
     font-size: 22px !important;
-    font-weight: 700 !important;
+    font-weight: 800 !important;
     margin-top: 42px;
 }
 
 .description-title {
-    color: #17345f !important;
+    color: #123b63 !important;
+    -webkit-text-fill-color: #123b63 !important;
     font-size: 24px !important;
-    font-weight: 800 !important;
+    font-weight: 900 !important;
     margin-bottom: 12px;
 }
 
-.description-box {
-    background: #ffffff;
-    border: 1px solid #dfe4ec;
-    border-radius: 14px;
-    padding: 22px;
-    color: #374151 !important;
-    font-size: 15px;
-    line-height: 1.7;
-}
+
+/* ==========================================================
+   NORMAL MARKDOWN TEXT
+   ========================================================== */
 
 .stMarkdown,
 .stMarkdown p,
-.stMarkdown li {
-    color: #374151;
+.stMarkdown li,
+.stMarkdown span {
+    color: #263746 !important;
+    -webkit-text-fill-color: #263746 !important;
 }
+
+
+/* ==========================================================
+   DESCRIPTION
+   ========================================================== */
+
+.description-box {
+    background: #ffffff !important;
+    border: 1px solid #d8e3ec !important;
+    border-radius: 16px !important;
+    padding: 24px !important;
+    color: #263746 !important;
+    font-size: 15px !important;
+    line-height: 1.8 !important;
+}
+
+
+/* ==========================================================
+   STREAMLIT CONTAINERS / CARDS
+   ========================================================== */
 
 div[data-testid="stVerticalBlockBorderWrapper"] {
-    background: #ffffff !important;
-    border: 1px solid #dfe4ec !important;
-    border-radius: 16px !important;
-    box-shadow: 0 2px 10px rgba(30, 41, 59, 0.06);
-    padding: 8px !important;
+    background: rgba(255,255,255,0.96) !important;
+    border: 1px solid #d7e4ed !important;
+    border-radius: 18px !important;
+    box-shadow: 0 8px 25px rgba(20, 55, 85, 0.08) !important;
+    padding: 10px !important;
 }
 
+
+/* ==========================================================
+   CARD HEADINGS
+   ========================================================== */
+
 .card-heading {
-    color: #26364d !important;
+    color: #17466e !important;
+    -webkit-text-fill-color: #17466e !important;
     font-size: 15px !important;
-    font-weight: 800 !important;
+    font-weight: 900 !important;
     margin-bottom: 16px;
 }
 
 .card-text {
-    color: #4b5563 !important;
+    color: #405364 !important;
+    -webkit-text-fill-color: #405364 !important;
     font-size: 14px !important;
     line-height: 2.2 !important;
 }
 
+
+/* ==========================================================
+   DETECTION TITLES
+   ========================================================== */
+
+.detection-box-title {
+    color: #124f45 !important;
+    -webkit-text-fill-color: #124f45 !important;
+    font-size: 19px !important;
+    font-weight: 900 !important;
+    margin-bottom: 13px;
+}
+
+
+/* ==========================================================
+   BUTTONS
+   ========================================================== */
+
 div.stButton > button {
     width: 100%;
-    height: 45px;
+    min-height: 46px;
     background: #ffffff !important;
-    color: #334155 !important;
-    border: 1px solid #d5dce6 !important;
-    border-radius: 8px !important;
+    color: #17466e !important;
+    -webkit-text-fill-color: #17466e !important;
+    border: 2px solid #cbdbe7 !important;
+    border-radius: 10px !important;
     font-size: 14px !important;
-    font-weight: 600 !important;
+    font-weight: 800 !important;
+    box-shadow: 0 3px 10px rgba(20,55,85,0.05) !important;
 }
 
 div.stButton > button:hover {
-    border-color: #17345f !important;
-    color: #17345f !important;
-    background: #f8fafc !important;
+    border-color: #16866f !important;
+    color: #12614f !important;
+    -webkit-text-fill-color: #12614f !important;
+    background: #f0fdf9 !important;
 }
 
-label {
-    color: #334155 !important;
+
+/* ==========================================================
+   FILE UPLOADER
+   ========================================================== */
+
+[data-testid="stFileUploader"] {
+    background: #f8fbfd !important;
+    border-radius: 12px !important;
 }
 
-.detection-box-title {
-    color: #17345f !important;
-    font-size: 18px !important;
-    font-weight: 800 !important;
-    margin-bottom: 12px;
+[data-testid="stFileUploader"] section {
+    background: #f8fbfd !important;
+    border: 1px dashed #9db8c9 !important;
+    border-radius: 12px !important;
 }
+
+[data-testid="stFileUploader"] label {
+    color: #29465b !important;
+    -webkit-text-fill-color: #29465b !important;
+    font-weight: 700 !important;
+}
+
+[data-testid="stFileUploader"] small {
+    color: #607586 !important;
+    -webkit-text-fill-color: #607586 !important;
+}
+
+
+/* ==========================================================
+   CAMERA
+   ========================================================== */
+
+[data-testid="stCameraInput"] {
+    border-radius: 12px !important;
+}
+
+
+/* ==========================================================
+   INPUT / OUTPUT PLACEHOLDER BOX
+   ========================================================== */
+
+/* Streamlit info boxes */
+div[data-testid="stAlert"] {
+    background: #eef7ff !important;
+    border: 1px solid #9ec5e6 !important;
+    border-radius: 12px !important;
+    opacity: 1 !important;
+}
+
+div[data-testid="stAlert"] p,
+div[data-testid="stAlert"] div,
+div[data-testid="stAlert"] span {
+    color: #24506e !important;
+    -webkit-text-fill-color: #24506e !important;
+    opacity: 1 !important;
+    font-weight: 700 !important;
+}
+
+
+/* ==========================================================
+   CUSTOM PLACEHOLDER
+   ========================================================== */
+
+.placeholder-box {
+    background: linear-gradient(
+        135deg,
+        #eef8ff,
+        #eefcf7
+    ) !important;
+
+    border: 1px solid #b8d9e5 !important;
+    border-radius: 12px !important;
+
+    min-height: 82px !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    padding: 18px !important;
+    margin-top: 8px !important;
+
+    color: #31566e !important;
+    -webkit-text-fill-color: #31566e !important;
+
+    font-size: 14px !important;
+    font-weight: 700 !important;
+
+    text-align: center !important;
+}
+
+
+/* ==========================================================
+   ALERT BOX
+   ========================================================== */
 
 .alert-box {
-    background: #fff1f2;
-    border: 2px solid #ef4444;
-    border-radius: 12px;
-    padding: 18px;
-    margin-top: 10px;
-    color: #991b1b !important;
+    background: linear-gradient(
+        135deg,
+        #fff5f5,
+        #fffafa
+    ) !important;
+
+    border: 3px solid #ef4444 !important;
+    border-radius: 15px !important;
+
+    padding: 20px !important;
+    margin-top: 12px !important;
+
+    color: #7f1d1d !important;
+    -webkit-text-fill-color: #7f1d1d !important;
+
+    box-shadow: 0 8px 22px rgba(239,68,68,0.12) !important;
 }
+
+.alert-box h3,
+.alert-box b,
+.alert-box {
+    color: #7f1d1d !important;
+    -webkit-text-fill-color: #7f1d1d !important;
+    opacity: 1 !important;
+}
+
+
+/* ==========================================================
+   NORMAL BOX
+   ========================================================== */
 
 .normal-box {
-    background: #f0fdf4;
-    border: 2px solid #22c55e;
-    border-radius: 12px;
-    padding: 18px;
-    margin-top: 10px;
+    background: linear-gradient(
+        135deg,
+        #f0fdf4,
+        #f7fff9
+    ) !important;
+
+    border: 3px solid #22c55e !important;
+    border-radius: 15px !important;
+
+    padding: 20px !important;
+    margin-top: 12px !important;
+
     color: #166534 !important;
+    -webkit-text-fill-color: #166534 !important;
+
+    box-shadow: 0 8px 22px rgba(34,197,94,0.10) !important;
+}
+
+.normal-box h3,
+.normal-box b,
+.normal-box {
+    color: #166534 !important;
+    -webkit-text-fill-color: #166534 !important;
+    opacity: 1 !important;
 }
 
 
-/* ============================================================
-   EMAIL SUCCESS MESSAGE
-   ============================================================ */
+/* ==========================================================
+   EMAIL SUCCESS
+   ========================================================== */
 
 .email-success {
-    background: #dcfce7 !important;
-    border: 3px solid #15803d !important;
-    border-radius: 14px !important;
-    padding: 18px 20px !important;
-    margin-top: 14px !important;
-    margin-bottom: 10px !important;
+    background: linear-gradient(
+        135deg,
+        #dcfce7,
+        #ecfdf5
+    ) !important;
+
+    border: 3px solid #16a34a !important;
+    border-radius: 15px !important;
+
+    padding: 20px !important;
+    margin-top: 15px !important;
+    margin-bottom: 12px !important;
+
     width: 100% !important;
     box-sizing: border-box !important;
+
     text-align: center !important;
+
+    box-shadow: 0 8px 22px rgba(22,163,74,0.12) !important;
+
+    opacity: 1 !important;
 }
 
 .email-success-title {
     color: #14532d !important;
-    font-size: 20px !important;
+    -webkit-text-fill-color: #14532d !important;
+
+    font-size: 19px !important;
     font-weight: 900 !important;
+
     margin: 0 0 8px 0 !important;
-    line-height: 1.4 !important;
+    line-height: 1.5 !important;
+
+    opacity: 1 !important;
 }
 
 .email-success-text {
     color: #166534 !important;
+    -webkit-text-fill-color: #166534 !important;
+
     font-size: 15px !important;
-    font-weight: 700 !important;
+    font-weight: 800 !important;
+
     margin: 0 !important;
     line-height: 1.6 !important;
+
+    opacity: 1 !important;
 }
 
 
-/* ============================================================
+/* ==========================================================
    EMAIL ERROR
-   ============================================================ */
+   ========================================================== */
 
 .email-error {
-    background: #fef2f2 !important;
+    background: #fff1f2 !important;
     border: 2px solid #dc2626 !important;
     border-radius: 12px !important;
+
     padding: 15px !important;
     margin-top: 12px !important;
+
     color: #991b1b !important;
+    -webkit-text-fill-color: #991b1b !important;
+
+    font-weight: 800 !important;
+    opacity: 1 !important;
+}
+
+
+/* ==========================================================
+   LOCATION CARD
+   ========================================================== */
+
+.location-card {
+    background: linear-gradient(
+        135deg,
+        #effcf8,
+        #f0f9ff
+    ) !important;
+
+    border: 2px solid #63b8a6 !important;
+    border-radius: 15px !important;
+
+    padding: 18px !important;
+    margin-top: 15px !important;
+
+    box-shadow: 0 6px 18px rgba(20,120,100,0.08) !important;
+}
+
+.location-title {
+    color: #075e54 !important;
+    -webkit-text-fill-color: #075e54 !important;
+
+    font-size: 18px !important;
+    font-weight: 900 !important;
+
+    margin-bottom: 8px !important;
+}
+
+.location-text {
+    color: #28545a !important;
+    -webkit-text-fill-color: #28545a !important;
+
+    font-size: 14px !important;
+    font-weight: 700 !important;
+
+    line-height: 1.7 !important;
+}
+
+
+/* ==========================================================
+   DETECTION DETAILS
+   ========================================================== */
+
+.details-title {
+    color: #173f62 !important;
+    -webkit-text-fill-color: #173f62 !important;
+
+    font-size: 17px !important;
+    font-weight: 900 !important;
+
+    margin-top: 18px !important;
+    margin-bottom: 10px !important;
+}
+
+.detail-item {
+    background: #f7fafc !important;
+
+    border-left: 4px solid #3b82f6 !important;
+
+    border-radius: 7px !important;
+
+    padding: 9px 12px !important;
+    margin-bottom: 7px !important;
+
+    color: #334e68 !important;
+    -webkit-text-fill-color: #334e68 !important;
+
+    font-size: 14px !important;
     font-weight: 700 !important;
 }
 
+
+/* ==========================================================
+   FOOTER
+   ========================================================== */
 
 .footer-text {
     text-align: center;
-    color: #64748b;
+
+    color: #607586 !important;
+    -webkit-text-fill-color: #607586 !important;
+
     margin-top: 35px;
+
     font-size: 13px;
+    font-weight: 600;
 }
 
+
+/* ==========================================================
+   RESPONSIVE
+   ========================================================== */
 
 @media(max-width: 900px) {
 
     .block-container {
-        padding-left: 5%;
-        padding-right: 5%;
+        padding-left: 4%;
+        padding-right: 4%;
     }
 
     .main-title,
     .detect-title {
-        font-size: 24px !important;
+        font-size: 25px !important;
     }
 
     .aicw-text {
@@ -289,7 +597,6 @@ label {
     .email-success-text {
         font-size: 14px !important;
     }
-
 }
 
 </style>
@@ -299,7 +606,7 @@ label {
 
 
 # ============================================================
-# LOAD YOLO MODEL
+# LOAD MODEL
 # ============================================================
 
 @st.cache_resource
@@ -320,6 +627,41 @@ def load_model():
 
 
 # ============================================================
+# APPROXIMATE LOCATION USING IP
+# ============================================================
+
+def get_ip_location():
+
+    try:
+
+        url = "https://ipapi.co/json/"
+
+        with urllib.request.urlopen(
+            url,
+            timeout=5
+        ) as response:
+
+            data = json.loads(
+                response.read().decode()
+            )
+
+        city = data.get("city", "")
+        region = data.get("region", "")
+        country = data.get("country_name", "")
+
+        if city:
+
+            return (
+                f"{city}, {region}, {country}"
+            )
+
+    except Exception:
+        pass
+
+    return "Location not available"
+
+
+# ============================================================
 # LOCATION
 # ============================================================
 
@@ -330,12 +672,13 @@ def get_location():
         location = st.secrets["LOCATION"]
 
         if location:
+
             return str(location)
 
     except Exception:
         pass
 
-    return "Location not configured"
+    return get_ip_location()
 
 
 # ============================================================
@@ -354,6 +697,214 @@ def get_current_time():
 
 
 # ============================================================
+# LIVE LOCATION UI
+# ============================================================
+
+def show_live_location():
+
+    st.markdown(
+        """
+<div class="location-card">
+
+<div class="location-title">
+📍 Live Location Access
+</div>
+
+<div class="location-text">
+Allow browser location permission to get the current
+device coordinates.
+</div>
+
+</div>
+""",
+        unsafe_allow_html=True
+    )
+
+    components.html(
+        """
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<style>
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: transparent;
+}
+
+.location-container {
+    background: #ffffff;
+    border: 1px solid #b8d9d0;
+    border-radius: 12px;
+    padding: 14px;
+    margin-top: 8px;
+}
+
+button {
+    background: #087f5b;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 11px 18px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #066a4c;
+}
+
+#status {
+    margin-top: 12px;
+    color: #29465b;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.6;
+}
+
+a {
+    color: #1769aa;
+    font-weight: bold;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="location-container">
+
+<button onclick="getLocation()">
+📍 Get My Live Location
+</button>
+
+<div id="status">
+Click the button and allow location permission.
+</div>
+
+</div>
+
+
+<script>
+
+function getLocation() {
+
+    const status = document.getElementById("status");
+
+    if (!navigator.geolocation) {
+
+        status.innerHTML =
+            "❌ Geolocation is not supported by this browser.";
+
+        return;
+    }
+
+    status.innerHTML =
+        "⏳ Requesting your location permission...";
+
+    navigator.geolocation.getCurrentPosition(
+
+        function(position) {
+
+            const latitude =
+                position.coords.latitude;
+
+            const longitude =
+                position.coords.longitude;
+
+            const accuracy =
+                position.coords.accuracy;
+
+            const mapURL =
+                "https://www.google.com/maps?q="
+                + latitude
+                + ","
+                + longitude;
+
+            status.innerHTML =
+                "✅ <b>Live Location Detected</b><br><br>" +
+
+                "Latitude: "
+                + latitude.toFixed(6)
+                + "<br>" +
+
+                "Longitude: "
+                + longitude.toFixed(6)
+                + "<br>" +
+
+                "Accuracy: approximately "
+                + Math.round(accuracy)
+                + " meters<br><br>" +
+
+                "<a href='"
+                + mapURL
+                + "' target='_blank'>"
+                + "🗺️ Open Location in Google Maps"
+                + "</a>";
+        },
+
+        function(error) {
+
+            if (error.code === 1) {
+
+                status.innerHTML =
+                    "❌ Location permission denied. " +
+                    "Please allow location access in your browser.";
+
+            }
+
+            else if (error.code === 2) {
+
+                status.innerHTML =
+                    "❌ Location unavailable. " +
+                    "Please check GPS/location services.";
+
+            }
+
+            else if (error.code === 3) {
+
+                status.innerHTML =
+                    "❌ Location request timed out. " +
+                    "Please try again.";
+
+            }
+
+            else {
+
+                status.innerHTML =
+                    "❌ Unable to get your location.";
+
+            }
+
+        },
+
+        {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+        }
+
+    );
+
+}
+
+</script>
+
+</body>
+
+</html>
+""",
+        height=175
+    )
+
+
+# ============================================================
 # SEND EMAIL
 # ============================================================
 
@@ -368,7 +919,7 @@ def send_email_alert():
         message = EmailMessage()
 
         message["Subject"] = (
-            "EcoBin AI - Garbage Overflow Alert"
+            "🚨 EcoBin AI - Garbage Overflow Alert"
         )
 
         message["From"] = sender_email
@@ -417,7 +968,7 @@ This alert was automatically generated by EcoBin AI.
         st.markdown(
             f"""
 <div class="email-error">
-    ❌ Email alert failed: {str(e)}
+❌ Email alert failed: {str(e)}
 </div>
 """,
             unsafe_allow_html=True
@@ -438,10 +989,6 @@ def generate_alert():
 
     previous = st.session_state.last_alert_time
 
-    # --------------------------------------------------------
-    # Prevent repeated email within 5 minutes
-    # --------------------------------------------------------
-
     if previous is not None:
 
         difference = (
@@ -452,15 +999,7 @@ def generate_alert():
 
             return
 
-    # --------------------------------------------------------
-    # Send Email
-    # --------------------------------------------------------
-
     email_sent = send_email_alert()
-
-    # --------------------------------------------------------
-    # Show SUCCESS message
-    # --------------------------------------------------------
 
     if email_sent:
 
@@ -469,12 +1008,16 @@ def generate_alert():
         st.markdown(
             """
 <div class="email-success">
-    <div class="email-success-title">
-        📧 ALERT EMAIL SENT SUCCESSFULLY
-    </div>
-    <div class="email-success-text">
-        The garbage overflow alert has been successfully sent to the configured email address.
-    </div>
+
+<div class="email-success-title">
+📧 ALERT EMAIL SENT SUCCESSFULLY
+</div>
+
+<div class="email-success-text">
+The garbage overflow alert has been successfully
+sent to the configured email address.
+</div>
+
 </div>
 """,
             unsafe_allow_html=True
@@ -496,7 +1039,7 @@ def normalize_class_name(name):
 
 
 # ============================================================
-# GET DETECTIONS FROM YOLO RESULT
+# EXTRACT DETECTIONS
 # ============================================================
 
 def extract_detections(result):
@@ -552,7 +1095,6 @@ def get_final_prediction(detections):
         ]
 
         and d["confidence"] >= 0.30
-
     ]
 
     normal_detections = [
@@ -567,7 +1109,6 @@ def get_final_prediction(detections):
             "non-overflow"
 
         ]
-
     ]
 
     if over_detections:
@@ -636,7 +1177,7 @@ def display_prediction(
     st.markdown(
         f"""
 <div class="detection-box-title">
-    {title}
+{title}
 </div>
 """,
         unsafe_allow_html=True
@@ -655,8 +1196,9 @@ def display_prediction(
 
     st.write("")
 
+
     # ========================================================
-    # GARBAGE OVERFLOW
+    # OVERFLOW
     # ========================================================
 
     if status == "GARBAGE OVERFLOW":
@@ -667,16 +1209,24 @@ def display_prediction(
 
 <h3>🚨 Garbage Overflow Detected</h3>
 
-<b>Detection:</b> overclass<br><br>
+<b>Detection:</b> overclass
+
+<br><br>
 
 <b>Confidence:</b>
-{confidence * 100:.2f}%<br><br>
+{confidence * 100:.2f}%
+
+<br><br>
 
 <b>📍 Location:</b>
-{get_location()}<br><br>
+{get_location()}
+
+<br><br>
 
 <b>🕒 Date & Time:</b>
-{get_current_time()}<br><br>
+{get_current_time()}
+
+<br><br>
 
 <b>⚠️ Status:</b>
 Violation Detected
@@ -686,8 +1236,8 @@ Violation Detected
             unsafe_allow_html=True
         )
 
-        # Send email
         generate_alert()
+
 
     # ========================================================
     # NORMAL
@@ -701,10 +1251,14 @@ Violation Detected
 
 <h3>✅ No Garbage Overflow Detected</h3>
 
-<b>Detection:</b> normal<br><br>
+<b>Detection:</b> normal
+
+<br><br>
 
 <b>Confidence:</b>
-{confidence * 100:.2f}%<br><br>
+{confidence * 100:.2f}%
+
+<br><br>
 
 <b>Status:</b>
 Normal
@@ -714,8 +1268,9 @@ Normal
             unsafe_allow_html=True
         )
 
+
     # ========================================================
-    # NO CLEAR DETECTION
+    # NO DETECTION
     # ========================================================
 
     else:
@@ -725,23 +1280,32 @@ Normal
             "Please try another image/video."
         )
 
+
     # ========================================================
-    # DETECTION DETAILS
+    # DETAILS
     # ========================================================
 
     if detections:
 
-        st.write("")
-
         st.markdown(
-            "**Detection Details**"
+            """
+<div class="details-title">
+🔎 Detection Details
+</div>
+""",
+            unsafe_allow_html=True
         )
 
         for detection in detections:
 
-            st.write(
-                f"• {detection['class']} — "
-                f"{detection['confidence'] * 100:.2f}%"
+            st.markdown(
+                f"""
+<div class="detail-item">
+• {detection['class']} —
+{detection['confidence'] * 100:.2f}%
+</div>
+""",
+                unsafe_allow_html=True
             )
 
 
@@ -751,9 +1315,7 @@ Normal
 
 def process_video(video_path, model):
 
-    cap = cv2.VideoCapture(
-        video_path
-    )
+    cap = cv2.VideoCapture(video_path)
 
     if not cap.isOpened():
 
@@ -788,17 +1350,12 @@ def process_video(video_path, model):
         )
     )
 
-    # ========================================================
-    # TEMPORARY OUTPUT FILES
-    # ========================================================
-
     raw_output = tempfile.NamedTemporaryFile(
         delete=False,
         suffix=".mp4"
     )
 
     raw_output_path = raw_output.name
-
     raw_output.close()
 
     h264_output = tempfile.NamedTemporaryFile(
@@ -807,12 +1364,7 @@ def process_video(video_path, model):
     )
 
     h264_output_path = h264_output.name
-
     h264_output.close()
-
-    # ========================================================
-    # VIDEO WRITER
-    # ========================================================
 
     fourcc = cv2.VideoWriter_fourcc(
         *"mp4v"
@@ -835,20 +1387,12 @@ def process_video(video_path, model):
 
     progress = st.progress(0)
 
-    # ========================================================
-    # PROCESS EVERY FRAME
-    # ========================================================
-
     while True:
 
         ret, frame = cap.read()
 
         if not ret:
             break
-
-        # ----------------------------------------------------
-        # YOLO PREDICTION
-        # ----------------------------------------------------
 
         results = model.predict(
             source=frame,
@@ -866,10 +1410,6 @@ def process_video(video_path, model):
             detections
         )
 
-        # ----------------------------------------------------
-        # COUNT DETECTIONS
-        # ----------------------------------------------------
-
         if status == "GARBAGE OVERFLOW":
 
             overflow_count += 1
@@ -884,22 +1424,14 @@ def process_video(video_path, model):
             normal_count += 1
             detection_count += 1
 
-        # ----------------------------------------------------
-        # YOLO ANNOTATED FRAME
-        # ----------------------------------------------------
-
         annotated_frame = result.plot()
-
-        # ----------------------------------------------------
-        # STATUS OVERLAY
-        # ----------------------------------------------------
 
         if status == "GARBAGE OVERFLOW":
 
             cv2.rectangle(
                 annotated_frame,
                 (10, 10),
-                (520, 80),
+                (540, 80),
                 (0, 0, 255),
                 -1
             )
@@ -941,7 +1473,7 @@ def process_video(video_path, model):
             cv2.rectangle(
                 annotated_frame,
                 (10, 10),
-                (370, 80),
+                (390, 80),
                 (80, 80, 80),
                 -1
             )
@@ -957,10 +1489,6 @@ def process_video(video_path, model):
                 cv2.LINE_AA
             )
 
-        # ----------------------------------------------------
-        # CONFIDENCE
-        # ----------------------------------------------------
-
         if confidence > 0:
 
             cv2.putText(
@@ -974,19 +1502,11 @@ def process_video(video_path, model):
                 cv2.LINE_AA
             )
 
-        # ----------------------------------------------------
-        # WRITE FRAME
-        # ----------------------------------------------------
-
         writer.write(
             annotated_frame
         )
 
         frame_number += 1
-
-        # ----------------------------------------------------
-        # PROGRESS
-        # ----------------------------------------------------
 
         if total_frames > 0:
 
@@ -997,19 +1517,9 @@ def process_video(video_path, model):
                 )
             )
 
-    # ========================================================
-    # RELEASE
-    # ========================================================
-
     cap.release()
-
     writer.release()
-
     progress.empty()
-
-    # ========================================================
-    # CONVERT TO H264
-    # ========================================================
 
     try:
 
@@ -1055,10 +1565,6 @@ def process_video(video_path, model):
 
         final_video_path = raw_output_path
 
-    # ========================================================
-    # READ VIDEO BYTES
-    # ========================================================
-
     try:
 
         with open(
@@ -1066,17 +1572,11 @@ def process_video(video_path, model):
             "rb"
         ) as video_file:
 
-            output_video_bytes = (
-                video_file.read()
-            )
+            output_video_bytes = video_file.read()
 
     except Exception:
 
         output_video_bytes = None
-
-    # ========================================================
-    # CLEANUP
-    # ========================================================
 
     try:
 
@@ -1099,10 +1599,6 @@ def process_video(video_path, model):
     except Exception:
 
         pass
-
-    # ========================================================
-    # FINAL RESULT
-    # ========================================================
 
     if detection_count == 0:
 
@@ -1136,7 +1632,7 @@ if st.session_state.page == "home":
     st.markdown(
         """
 <div class="main-title">
-    ♻️ EcoBin AI – Smart Garbage Overflow Detection
+♻️ EcoBin AI – Smart Garbage Overflow Detection
 </div>
 """,
         unsafe_allow_html=True
@@ -1147,6 +1643,7 @@ if st.session_state.page == "home":
         gap="large"
     )
 
+
     # ========================================================
     # LEFT
     # ========================================================
@@ -1156,9 +1653,9 @@ if st.session_state.page == "home":
         st.markdown(
             """
 <div class="aicw-text">
-    AI Career for Women
-    <br>
-    (AICW)
+AI Career for Women
+<br>
+(AICW)
 </div>
 """,
             unsafe_allow_html=True
@@ -1167,7 +1664,7 @@ if st.session_state.page == "home":
         st.markdown(
             """
 <div class="capstone-text">
-    Capstone Project
+Capstone Project
 </div>
 """,
             unsafe_allow_html=True
@@ -1185,6 +1682,7 @@ if st.session_state.page == "home":
 
             st.rerun()
 
+
     # ========================================================
     # RIGHT
     # ========================================================
@@ -1194,7 +1692,7 @@ if st.session_state.page == "home":
         st.markdown(
             """
 <div class="description-title">
-    Project Description
+Project Description
 </div>
 """,
             unsafe_allow_html=True
@@ -1206,6 +1704,12 @@ if st.session_state.page == "home":
 
             st.markdown(
                 """
+<div style="
+color:#263746 !important;
+font-size:15px;
+line-height:1.8;
+">
+
 EcoBin AI is an AI-powered Smart Garbage Overflow
 Detection System designed to automatically identify
 overflowing garbage bins using computer vision and
@@ -1215,7 +1719,8 @@ The system analyzes images, camera-captured photos,
 and CCTV/video files to identify garbage overflow
 conditions. The trained YOLOv8 model classifies the
 detected garbage condition into two classes:
-<b>overclass</b> and <b>normal</b>.
+<b style="color:#b42318;">overclass</b> and
+<b style="color:#166534;">normal</b>.
 
 When an overflow condition is detected, EcoBin AI
 automatically generates an alert containing the
@@ -1226,15 +1731,19 @@ email address.
 This system helps reduce manual monitoring effort,
 support faster waste-management response, and
 improve cleanliness in public and residential areas.
+
+</div>
 """,
                 unsafe_allow_html=True
             )
 
+
     st.write("")
     st.write("")
 
+
     # ========================================================
-    # TEAM DETAILS
+    # TEAM
     # ========================================================
 
     team_col, gmail_col, guide_col = st.columns(
@@ -1242,9 +1751,6 @@ improve cleanliness in public and residential areas.
         gap="large"
     )
 
-    # ========================================================
-    # TEAM MEMBERS
-    # ========================================================
 
     with team_col:
 
@@ -1255,7 +1761,7 @@ improve cleanliness in public and residential areas.
             st.markdown(
                 """
 <div class="card-heading">
-    TEAM MEMBERS
+TEAM MEMBERS
 </div>
 """,
                 unsafe_allow_html=True
@@ -1275,9 +1781,6 @@ improve cleanliness in public and residential areas.
                 unsafe_allow_html=True
             )
 
-    # ========================================================
-    # GMAIL
-    # ========================================================
 
     with gmail_col:
 
@@ -1288,7 +1791,7 @@ improve cleanliness in public and residential areas.
             st.markdown(
                 """
 <div class="card-heading">
-    GMAIL
+GMAIL
 </div>
 """,
                 unsafe_allow_html=True
@@ -1308,9 +1811,6 @@ nadimpallisushmasri29@gmail.com
                 unsafe_allow_html=True
             )
 
-    # ========================================================
-    # GUIDE
-    # ========================================================
 
     with guide_col:
 
@@ -1321,7 +1821,7 @@ nadimpallisushmasri29@gmail.com
             st.markdown(
                 """
 <div class="card-heading">
-    GUIDE NAME
+GUIDE NAME
 </div>
 """,
                 unsafe_allow_html=True
@@ -1330,7 +1830,7 @@ nadimpallisushmasri29@gmail.com
             st.markdown(
                 """
 <div class="card-text">
-    MD.Abdul Aziz
+MD.Abdul Aziz
 </div>
 """,
                 unsafe_allow_html=True
@@ -1341,7 +1841,7 @@ nadimpallisushmasri29@gmail.com
             st.markdown(
                 """
 <div class="card-heading">
-    Designation
+Designation
 </div>
 """,
                 unsafe_allow_html=True
@@ -1350,20 +1850,17 @@ nadimpallisushmasri29@gmail.com
             st.markdown(
                 """
 <div class="card-text">
-    Trainer, Co-Lead-AICW
+Trainer, Co-Lead-AICW
 </div>
 """,
                 unsafe_allow_html=True
             )
 
-    # ========================================================
-    # FOOTER
-    # ========================================================
 
     st.markdown(
         """
 <div class="footer-text">
-    EcoBin AI – Smart Garbage Overflow Detection
+EcoBin AI – Smart Garbage Overflow Detection
 </div>
 """,
         unsafe_allow_html=True
@@ -1379,7 +1876,7 @@ else:
     st.markdown(
         """
 <div class="detect-title">
-    ♻️ EcoBin AI
+♻️ EcoBin AI
 </div>
 """,
         unsafe_allow_html=True
@@ -1388,14 +1885,15 @@ else:
     st.markdown(
         """
 <div class="detect-subtitle">
-    AI-Powered Smart Garbage Overflow Detection System
+AI-Powered Smart Garbage Overflow Detection System
 </div>
 """,
         unsafe_allow_html=True
     )
 
+
     # ========================================================
-    # BACK BUTTON
+    # BACK
     # ========================================================
 
     if st.button(
@@ -1407,10 +1905,21 @@ else:
 
         st.rerun()
 
+
     st.write("")
 
+
     # ========================================================
-    # LOAD MODEL
+    # LIVE LOCATION
+    # ========================================================
+
+    show_live_location()
+
+    st.write("")
+
+
+    # ========================================================
+    # MODEL
     # ========================================================
 
     try:
@@ -1431,13 +1940,13 @@ else:
 
 
     # ========================================================
-    # IMAGE SECTION
+    # IMAGE DETECTION
     # ========================================================
 
     st.markdown(
         """
 <div class="detection-box-title">
-    🖼️ Image Detection
+🖼️ Image Detection
 </div>
 """,
         unsafe_allow_html=True
@@ -1447,6 +1956,7 @@ else:
         3,
         gap="medium"
     )
+
 
     # ========================================================
     # IMAGE UPLOAD
@@ -1461,7 +1971,7 @@ else:
             st.markdown(
                 """
 <div class="detection-box-title">
-    Upload Image
+Upload Image
 </div>
 """,
                 unsafe_allow_html=True
@@ -1477,6 +1987,7 @@ else:
                 key="image_upload"
             )
 
+
     # ========================================================
     # IMAGE INPUT
     # ========================================================
@@ -1490,7 +2001,7 @@ else:
             st.markdown(
                 """
 <div class="detection-box-title">
-    Input
+Input
 </div>
 """,
                 unsafe_allow_html=True
@@ -1511,9 +2022,15 @@ else:
 
             else:
 
-                st.info(
-                    "Upload an image to start prediction."
+                st.markdown(
+                    """
+<div class="placeholder-box">
+📷 Upload an image to see the input here.
+</div>
+""",
+                    unsafe_allow_html=True
                 )
+
 
     # ========================================================
     # IMAGE OUTPUT
@@ -1528,7 +2045,7 @@ else:
             st.markdown(
                 """
 <div class="detection-box-title">
-    Output
+Output
 </div>
 """,
                 unsafe_allow_html=True
@@ -1543,7 +2060,7 @@ else:
                 ):
 
                     with st.spinner(
-                        "AI is analyzing the image..."
+                        "🤖 AI is analyzing the image..."
                     ):
 
                         result, detections = predict_image(
@@ -1570,8 +2087,13 @@ else:
 
             else:
 
-                st.info(
-                    "Prediction output will appear here."
+                st.markdown(
+                    """
+<div class="placeholder-box">
+🎯 Prediction output will appear here.
+</div>
+""",
+                    unsafe_allow_html=True
                 )
 
 
@@ -1584,7 +2106,7 @@ else:
     st.markdown(
         """
 <div class="detection-box-title">
-    📷 Camera Detection
+📷 Camera Detection
 </div>
 """,
         unsafe_allow_html=True
@@ -1594,6 +2116,7 @@ else:
         3,
         gap="medium"
     )
+
 
     # ========================================================
     # CAMERA
@@ -1608,7 +2131,7 @@ else:
             st.markdown(
                 """
 <div class="detection-box-title">
-    Camera
+Camera
 </div>
 """,
                 unsafe_allow_html=True
@@ -1618,6 +2141,7 @@ else:
                 "Capture Image",
                 key="camera"
             )
+
 
     # ========================================================
     # CAMERA INPUT
@@ -1632,7 +2156,7 @@ else:
             st.markdown(
                 """
 <div class="detection-box-title">
-    Input
+Input
 </div>
 """,
                 unsafe_allow_html=True
@@ -1653,9 +2177,15 @@ else:
 
             else:
 
-                st.info(
-                    "Camera image will appear here."
+                st.markdown(
+                    """
+<div class="placeholder-box">
+📷 Camera image will appear here.
+</div>
+""",
+                    unsafe_allow_html=True
                 )
+
 
     # ========================================================
     # CAMERA OUTPUT
@@ -1670,7 +2200,7 @@ else:
             st.markdown(
                 """
 <div class="detection-box-title">
-    Output
+Output
 </div>
 """,
                 unsafe_allow_html=True
@@ -1685,7 +2215,7 @@ else:
                 ):
 
                     with st.spinner(
-                        "Analyzing camera image..."
+                        "🤖 Analyzing camera image..."
                     ):
 
                         result, detections = predict_image(
@@ -1712,13 +2242,18 @@ else:
 
             else:
 
-                st.info(
-                    "Camera prediction will appear here."
+                st.markdown(
+                    """
+<div class="placeholder-box">
+🎯 Camera prediction will appear here.
+</div>
+""",
+                    unsafe_allow_html=True
                 )
 
 
     # ========================================================
-    # VIDEO / CCTV SECTION
+    # VIDEO SECTION
     # ========================================================
 
     st.write("")
@@ -1727,7 +2262,7 @@ else:
     st.markdown(
         """
 <div class="detection-box-title">
-    🎥 Video / CCTV Detection
+🎥 Video / CCTV Detection
 </div>
 """,
         unsafe_allow_html=True
@@ -1752,7 +2287,7 @@ else:
             st.markdown(
                 """
 <div class="detection-box-title">
-    Upload Video
+Upload Video
 </div>
 """,
                 unsafe_allow_html=True
@@ -1784,7 +2319,7 @@ else:
             st.markdown(
                 """
 <div class="detection-box-title">
-    Input
+Input
 </div>
 """,
                 unsafe_allow_html=True
@@ -1798,8 +2333,13 @@ else:
 
             else:
 
-                st.info(
-                    "Upload a CCTV/video file."
+                st.markdown(
+                    """
+<div class="placeholder-box">
+🎥 Upload a CCTV/video file to see the input here.
+</div>
+""",
+                    unsafe_allow_html=True
                 )
 
 
@@ -1816,17 +2356,13 @@ else:
             st.markdown(
                 """
 <div class="detection-box-title">
-    Output
+Output
 </div>
 """,
                 unsafe_allow_html=True
             )
 
             if uploaded_video:
-
-                # =================================================
-                # ANALYZE VIDEO BUTTON
-                # =================================================
 
                 if st.button(
                     "🎥 Analyze Video",
@@ -1852,7 +2388,7 @@ else:
                     try:
 
                         with st.spinner(
-                            "🤖 AI is analyzing CCTV video and generating output..."
+                            "🤖 AI is analyzing CCTV video..."
                         ):
 
                             (
@@ -1886,9 +2422,6 @@ else:
                                 temp_video.name
                             )
 
-                # =================================================
-                # DISPLAY VIDEO RESULT
-                # =================================================
 
                 if st.session_state.video_result is not None:
 
@@ -1898,6 +2431,7 @@ else:
                         video_conf
                     ) = st.session_state.video_result
 
+
                     # =================================================
                     # OUTPUT VIDEO
                     # =================================================
@@ -1906,13 +2440,8 @@ else:
 
                         st.markdown(
                             """
-<div style="
-    color:#17345f;
-    font-size:16px;
-    font-weight:800;
-    margin-bottom:10px;
-">
-    🎬 AI Processed Output Video
+<div class="detection-box-title">
+🎬 AI Processed Output Video
 </div>
 """,
                             unsafe_allow_html=True
@@ -1930,7 +2459,7 @@ else:
 
 
                     # =================================================
-                    # VIDEO OVERFLOW ALERT
+                    # VIDEO OVERFLOW
                     # =================================================
 
                     if video_status == "GARBAGE OVERFLOW":
@@ -1941,16 +2470,24 @@ else:
 
 <h3>🚨 Garbage Overflow Detected</h3>
 
-<b>Detection:</b> overclass<br><br>
+<b>Detection:</b> overclass
+
+<br><br>
 
 <b>Confidence:</b>
-{video_conf * 100:.2f}%<br><br>
+{video_conf * 100:.2f}%
+
+<br><br>
 
 <b>📍 Location:</b>
-{get_location()}<br><br>
+{get_location()}
+
+<br><br>
 
 <b>🕒 Date & Time:</b>
-{get_current_time()}<br><br>
+{get_current_time()}
+
+<br><br>
 
 <b>⚠️ Status:</b>
 Violation Detected
@@ -1960,7 +2497,6 @@ Violation Detected
                             unsafe_allow_html=True
                         )
 
-                        # Send email
                         generate_alert()
 
 
@@ -1986,7 +2522,7 @@ Normal
 
 
                     # =================================================
-                    # NO CLEAR DETECTION
+                    # NO DETECTION
                     # =================================================
 
                     else:
@@ -1998,6 +2534,11 @@ Normal
 
             else:
 
-                st.info(
-                    "Video prediction will appear here."
+                st.markdown(
+                    """
+<div class="placeholder-box">
+🎯 Video prediction will appear here.
+</div>
+""",
+                    unsafe_allow_html=True
                 )
