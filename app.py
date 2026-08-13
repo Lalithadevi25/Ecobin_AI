@@ -8,7 +8,6 @@ import os
 import smtplib
 import subprocess
 import imageio_ffmpeg
-import hashlib
 
 from email.message import EmailMessage
 from datetime import datetime
@@ -34,6 +33,9 @@ st.set_page_config(
 if "page" not in st.session_state:
     st.session_state.page = "home"
 
+if "last_alert_time" not in st.session_state:
+    st.session_state.last_alert_time = None
+
 if "image_result" not in st.session_state:
     st.session_state.image_result = None
 
@@ -43,15 +45,12 @@ if "camera_result" not in st.session_state:
 if "video_result" not in st.session_state:
     st.session_state.video_result = None
 
-# Event-based alert tracking
-if "last_alert_event_id" not in st.session_state:
-    st.session_state.last_alert_event_id = None
+# Email status
+if "email_sent" not in st.session_state:
+    st.session_state.email_sent = False
 
-if "last_alert_status" not in st.session_state:
-    st.session_state.last_alert_status = None
-
-if "last_alert_event_display" not in st.session_state:
-    st.session_state.last_alert_event_display = None
+if "email_error" not in st.session_state:
+    st.session_state.email_error = None
 
 
 # ============================================================
@@ -85,6 +84,11 @@ footer {
     visibility: hidden;
 }
 
+
+/* ============================================================
+   TITLES
+   ============================================================ */
+
 .main-title,
 .detect-title {
     color: #17345f !important;
@@ -107,6 +111,11 @@ footer {
     font-size: 15px;
     margin-bottom: 25px;
 }
+
+
+/* ============================================================
+   HOME PAGE
+   ============================================================ */
 
 .aicw-text {
     color: #17345f !important;
@@ -139,11 +148,21 @@ footer {
     line-height: 1.7;
 }
 
+
+/* ============================================================
+   GENERAL TEXT
+   ============================================================ */
+
 .stMarkdown,
 .stMarkdown p,
 .stMarkdown li {
     color: #374151;
 }
+
+
+/* ============================================================
+   CONTAINERS
+   ============================================================ */
 
 div[data-testid="stVerticalBlockBorderWrapper"] {
     background: #ffffff !important;
@@ -152,6 +171,11 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     box-shadow: 0 2px 10px rgba(30, 41, 59, 0.06);
     padding: 8px !important;
 }
+
+
+/* ============================================================
+   CARDS
+   ============================================================ */
 
 .card-heading {
     color: #26364d !important;
@@ -165,6 +189,11 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     font-size: 14px !important;
     line-height: 2.2 !important;
 }
+
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
 
 div.stButton > button {
     width: 100%;
@@ -183,9 +212,19 @@ div.stButton > button:hover {
     background: #f8fafc !important;
 }
 
+
+/* ============================================================
+   LABELS
+   ============================================================ */
+
 label {
     color: #334155 !important;
 }
+
+
+/* ============================================================
+   DETECTION TITLE
+   ============================================================ */
 
 .detection-box-title {
     color: #17345f !important;
@@ -193,6 +232,11 @@ label {
     font-weight: 800 !important;
     margin-bottom: 12px;
 }
+
+
+/* ============================================================
+   OVERFLOW ALERT BOX
+   ============================================================ */
 
 .alert-box {
     background: #fff1f2;
@@ -205,7 +249,13 @@ label {
 
 .alert-box h3 {
     color: #991b1b !important;
+    font-weight: 800 !important;
 }
+
+
+/* ============================================================
+   NORMAL BOX
+   ============================================================ */
 
 .normal-box {
     background: #f0fdf4;
@@ -218,45 +268,58 @@ label {
 
 .normal-box h3 {
     color: #166534 !important;
+    font-weight: 800 !important;
 }
 
-/* =========================================================
-   EMAIL SUCCESS MESSAGE
-   ========================================================= */
+
+/* ============================================================
+   EMAIL SUCCESS BOX
+   ============================================================ */
 
 .email-success-box {
-    background: #dcfce7 !important;
-    border: 2px solid #15803d !important;
-    border-radius: 12px !important;
-    padding: 15px 18px !important;
-    margin-top: 12px !important;
-    color: #14532d !important;
-    font-size: 16px !important;
-    font-weight: 800 !important;
+    background: #dcfce7;
+    border: 3px solid #15803d;
+    border-radius: 14px;
+    padding: 18px 20px;
+    margin-top: 15px;
+    margin-bottom: 10px;
+    text-align: center;
+    box-shadow: 0 3px 10px rgba(21, 128, 61, 0.12);
 }
 
 .email-success-title {
     color: #14532d !important;
-    font-size: 17px !important;
+    font-size: 20px !important;
     font-weight: 900 !important;
+    margin-bottom: 6px;
 }
 
 .email-success-text {
     color: #166534 !important;
-    font-size: 14px !important;
-    font-weight: 700 !important;
-    margin-top: 5px !important;
+    font-size: 15px !important;
+    font-weight: 800 !important;
+    line-height: 1.5;
 }
 
+
+/* ============================================================
+   EMAIL ERROR BOX
+   ============================================================ */
+
 .email-error-box {
-    background: #fee2e2 !important;
-    border: 2px solid #dc2626 !important;
-    border-radius: 12px !important;
-    padding: 15px 18px !important;
-    margin-top: 12px !important;
+    background: #fef2f2;
+    border: 2px solid #dc2626;
+    border-radius: 12px;
+    padding: 15px;
+    margin-top: 12px;
     color: #991b1b !important;
-    font-weight: 800 !important;
+    font-weight: 700 !important;
 }
+
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
 
 .footer-text {
     text-align: center;
@@ -264,6 +327,11 @@ label {
     margin-top: 35px;
     font-size: 13px;
 }
+
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
 
 @media(max-width: 900px) {
 
@@ -347,82 +415,65 @@ def get_current_time():
 
 
 # ============================================================
-# CREATE EVENT ID
+# SEND EMAIL
 # ============================================================
 
-def create_event_id(source_type, file_bytes):
-
-    file_hash = hashlib.md5(
-        file_bytes
-    ).hexdigest()
-
-    return f"{source_type}_{file_hash}"
-
-
-# ============================================================
-# SEND EMAIL ALERT
-# ============================================================
-
-def send_email_alert(
-    confidence,
-    detection_class="overflow"
-):
+def send_email_alert():
 
     try:
 
         sender_email = st.secrets["EMAIL_SENDER"]
+
         sender_password = st.secrets["EMAIL_PASSWORD"]
+
         receiver_email = st.secrets["EMAIL_RECEIVER"]
 
-        current_time = get_current_time()
-        location = get_location()
+
+        # ----------------------------------------------------
+        # CREATE EMAIL
+        # ----------------------------------------------------
 
         message = EmailMessage()
 
         message["Subject"] = (
-            "🚨 EcoBin AI - Garbage Overflow Alert"
+            "EcoBin AI - Garbage Overflow Alert"
         )
 
         message["From"] = sender_email
+
         message["To"] = receiver_email
+
+
+        # ----------------------------------------------------
+        # EMAIL CONTENT
+        # ----------------------------------------------------
 
         message.set_content(
             f"""
-ECOBIN AI - SMART GARBAGE OVERFLOW DETECTION
-================================================
+GARBAGE OVERFLOW DETECTED!
 
-🚨 GARBAGE OVERFLOW DETECTED
-
-Detection Details
------------------
-
-Detection Class:
-{detection_class}
-
-Confidence:
-{confidence * 100:.2f}%
+EcoBin AI - Smart Garbage Overflow Detection System
 
 Location:
-{location}
+{get_location()}
 
 Date & Time:
-{current_time}
+{get_current_time()}
 
 Status:
 Violation Detected
 
-Action Required:
-Please inspect the garbage bin and
-arrange waste collection if necessary.
+Detection Class:
+overclass
 
-This alert was automatically generated
-by EcoBin AI - Smart Garbage Overflow
-Detection System.
-
-================================================
+This alert was automatically generated by EcoBin AI.
 """
-
         )
+
+
+        # ----------------------------------------------------
+        # SMTP
+        # ----------------------------------------------------
 
         with smtplib.SMTP(
             "smtp.gmail.com",
@@ -440,7 +491,9 @@ Detection System.
                 message
             )
 
+
         return True, None
+
 
     except Exception as e:
 
@@ -448,114 +501,126 @@ Detection System.
 
 
 # ============================================================
-# EVENT-BASED ALERT
+# EMAIL SUCCESS DISPLAY
 # ============================================================
 
-def generate_alert(
-    event_id,
-    confidence,
-    detection_class="overflow"
-):
+def display_email_success():
 
-    # --------------------------------------------------------
-    # SAME EVENT ALREADY ALERTED
-    # --------------------------------------------------------
+    st.markdown(
+        """
+        <div class="email-success-box">
 
-    if (
-        st.session_state.last_alert_event_id
-        == event_id
-    ):
+            <div class="email-success-title">
+                📧 ALERT EMAIL SENT SUCCESSFULLY
+            </div>
 
-        return False
+            <div class="email-success-text">
+                The garbage overflow alert has been
+                successfully sent to the configured email address.
+            </div>
 
-
-    # --------------------------------------------------------
-    # SEND NEW ALERT
-    # --------------------------------------------------------
-
-    email_sent, error_message = send_email_alert(
-        confidence,
-        detection_class
+        </div>
+        """,
+        unsafe_allow_html=True
     )
 
+
+# ============================================================
+# EMAIL ERROR DISPLAY
+# ============================================================
+
+def display_email_error(error_message):
+
+    st.markdown(
+        f"""
+        <div class="email-error-box">
+
+            ❌ Alert email could not be sent.<br><br>
+
+            <b>Error:</b> {error_message}
+
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+
+# ============================================================
+# GENERATE ALERT
+# ============================================================
+
+def generate_alert():
+
+    current_dt = datetime.now(
+        ZoneInfo("Asia/Kolkata")
+    )
+
+    previous = st.session_state.last_alert_time
+
+
     # --------------------------------------------------------
-    # SAVE EVENT
+    # CHECK 5 MINUTE COOLDOWN
     # --------------------------------------------------------
 
-    st.session_state.last_alert_event_id = event_id
+    if previous is not None:
+
+        difference = (
+            current_dt - previous
+        ).total_seconds()
+
+        if difference < 300:
+
+            # Do not send another email
+            # but keep success message visible
+            if st.session_state.email_sent:
+
+                display_email_success()
+
+            return
+
+
+    # --------------------------------------------------------
+    # RESET STATUS BEFORE NEW ATTEMPT
+    # --------------------------------------------------------
+
+    st.session_state.email_sent = False
+    st.session_state.email_error = None
+
+
+    # --------------------------------------------------------
+    # SEND EMAIL
+    # --------------------------------------------------------
+
+    email_sent, error_message = send_email_alert()
+
+
+    # --------------------------------------------------------
+    # SUCCESS
+    # --------------------------------------------------------
 
     if email_sent:
 
-        st.session_state.last_alert_status = "success"
+        st.session_state.last_alert_time = current_dt
 
-        st.session_state.last_alert_event_display = event_id
+        st.session_state.email_sent = True
 
-        return True
+        st.session_state.email_error = None
+
+        display_email_success()
+
+
+    # --------------------------------------------------------
+    # FAILURE
+    # --------------------------------------------------------
 
     else:
 
-        st.session_state.last_alert_status = "failed"
+        st.session_state.email_sent = False
 
-        st.session_state.last_alert_event_display = error_message
+        st.session_state.email_error = error_message
 
-        return False
-
-
-# ============================================================
-# DISPLAY EMAIL SUCCESS
-# ============================================================
-
-def display_email_status(event_id):
-
-    if (
-        st.session_state.last_alert_event_display
-        != event_id
-    ):
-
-        return
-
-    if (
-        st.session_state.last_alert_status
-        == "success"
-    ):
-
-        st.markdown(
-            """
-            <div class="email-success-box">
-
-                <div class="email-success-title">
-                    📧 ALERT EMAIL SENT SUCCESSFULLY
-                </div>
-
-                <div class="email-success-text">
-                    The garbage overflow alert has been
-                    successfully sent to the configured email address.
-                </div>
-
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-    elif (
-        st.session_state.last_alert_status
-        == "failed"
-    ):
-
-        st.markdown(
-            f"""
-            <div class="email-error-box">
-
-                ❌ ALERT EMAIL COULD NOT BE SENT
-
-                <br><br>
-
-                Please check the Gmail configuration
-                in Streamlit Secrets.
-
-            </div>
-            """,
-            unsafe_allow_html=True
+        display_email_error(
+            error_message
         )
 
 
@@ -565,25 +630,17 @@ def display_email_status(event_id):
 
 def normalize_class_name(name):
 
-    name = str(
-        name
-    ).lower().strip()
+    name = str(name).lower().strip()
 
-    name = name.replace(
-        "_",
-        " "
-    )
+    name = name.replace("_", " ")
 
-    name = name.replace(
-        "-",
-        " "
-    )
+    name = name.replace("-", " ")
 
     return name
 
 
 # ============================================================
-# GET DETECTIONS
+# GET DETECTIONS FROM YOLO RESULT
 # ============================================================
 
 def extract_detections(result):
@@ -593,6 +650,7 @@ def extract_detections(result):
     if result.boxes is None:
 
         return detections
+
 
     for box in result.boxes:
 
@@ -615,6 +673,7 @@ def extract_detections(result):
             "confidence": confidence
 
         })
+
 
     return detections
 
@@ -643,6 +702,7 @@ def get_final_prediction(detections):
 
     ]
 
+
     normal_detections = [
 
         d for d in detections
@@ -658,48 +718,36 @@ def get_final_prediction(detections):
 
     ]
 
+
     if over_detections:
 
         best = max(
-
             over_detections,
-
             key=lambda x: x["confidence"]
-
         )
 
         return (
-
             "GARBAGE OVERFLOW",
-
             best["confidence"]
-
         )
+
 
     if normal_detections:
 
         best = max(
-
             normal_detections,
-
             key=lambda x: x["confidence"]
-
         )
 
         return (
-
             "NORMAL",
-
             best["confidence"]
-
         )
 
+
     return (
-
         "NO CLEAR DETECTION",
-
         0.0
-
     )
 
 
@@ -707,23 +755,14 @@ def get_final_prediction(detections):
 # PREDICT IMAGE
 # ============================================================
 
-def predict_image(
-    image,
-    model
-):
+def predict_image(image, model):
 
-    image_np = np.array(
-        image
-    )
+    image_np = np.array(image)
 
     results = model.predict(
-
         source=image_np,
-
         conf=0.20,
-
         verbose=False
-
     )
 
     result = results[0]
@@ -732,10 +771,7 @@ def predict_image(
         result
     )
 
-    return (
-        result,
-        detections
-    )
+    return result, detections
 
 
 # ============================================================
@@ -745,37 +781,39 @@ def predict_image(
 def display_prediction(
     result,
     detections,
-    title="Prediction Result",
-    event_id=None
+    title="Prediction Result"
 ):
 
     st.markdown(
-
-        f"""
-        <div class="detection-box-title">
-            {title}
-        </div>
-        """,
-
+        f'<div class="detection-box-title">'
+        f'{title}'
+        f'</div>',
         unsafe_allow_html=True
-
     )
+
+
+    # --------------------------------------------------------
+    # ANNOTATED IMAGE
+    # --------------------------------------------------------
 
     annotated = result.plot()
 
     st.image(
-
         annotated,
-
         use_container_width=True
-
     )
+
+
+    # --------------------------------------------------------
+    # FINAL STATUS
+    # --------------------------------------------------------
 
     status, confidence = get_final_prediction(
         detections
     )
 
     st.write("")
+
 
     # ========================================================
     # OVERFLOW
@@ -784,13 +822,12 @@ def display_prediction(
     if status == "GARBAGE OVERFLOW":
 
         st.markdown(
-
             f"""
             <div class="alert-box">
 
             <h3>🚨 Garbage Overflow Detected</h3>
 
-            <b>Detection:</b> overflow<br><br>
+            <b>Detection:</b> overclass<br><br>
 
             <b>Confidence:</b>
             {confidence * 100:.2f}%<br><br>
@@ -806,26 +843,12 @@ def display_prediction(
 
             </div>
             """,
-
             unsafe_allow_html=True
-
         )
 
-        # ----------------------------------------------------
-        # EVENT BASED EMAIL
-        # ----------------------------------------------------
 
-        if event_id is not None:
-
-            generate_alert(
-                event_id,
-                confidence,
-                "overflow"
-            )
-
-            display_email_status(
-                event_id
-            )
+        # SEND EMAIL
+        generate_alert()
 
 
     # ========================================================
@@ -835,7 +858,6 @@ def display_prediction(
     elif status == "NORMAL":
 
         st.markdown(
-
             f"""
             <div class="normal-box">
 
@@ -851,23 +873,19 @@ def display_prediction(
 
             </div>
             """,
-
             unsafe_allow_html=True
-
         )
 
 
     # ========================================================
-    # NO CLEAR
+    # NO CLEAR DETECTION
     # ========================================================
 
     else:
 
         st.warning(
-
             "⚠️ No clear garbage condition detected. "
             "Please try another image/video."
-
         )
 
 
@@ -886,11 +904,8 @@ def display_prediction(
         for detection in detections:
 
             st.write(
-
                 f"• {detection['class']} — "
-
                 f"{detection['confidence'] * 100:.2f}%"
-
             )
 
 
@@ -898,10 +913,7 @@ def display_prediction(
 # PROCESS VIDEO
 # ============================================================
 
-def process_video(
-    video_path,
-    model
-):
+def process_video(video_path, model):
 
     cap = cv2.VideoCapture(
         video_path
@@ -915,6 +927,7 @@ def process_video(
             0.0
         )
 
+
     fps = cap.get(
         cv2.CAP_PROP_FPS
     )
@@ -922,6 +935,7 @@ def process_video(
     if fps <= 0:
 
         fps = 25
+
 
     width = int(
         cap.get(
@@ -941,16 +955,14 @@ def process_video(
         )
     )
 
+
     # ========================================================
     # TEMPORARY OUTPUT FILES
     # ========================================================
 
     raw_output = tempfile.NamedTemporaryFile(
-
         delete=False,
-
         suffix=".mp4"
-
     )
 
     raw_output_path = raw_output.name
@@ -959,11 +971,8 @@ def process_video(
 
 
     h264_output = tempfile.NamedTemporaryFile(
-
         delete=False,
-
         suffix=".mp4"
-
     )
 
     h264_output_path = h264_output.name
@@ -980,15 +989,10 @@ def process_video(
     )
 
     writer = cv2.VideoWriter(
-
         raw_output_path,
-
         fourcc,
-
         fps,
-
         (width, height)
-
     )
 
 
@@ -1003,9 +1007,7 @@ def process_video(
     best_overflow_confidence = 0.0
 
 
-    progress = st.progress(
-        0
-    )
+    progress = st.progress(0)
 
 
     # ========================================================
@@ -1017,22 +1019,17 @@ def process_video(
         ret, frame = cap.read()
 
         if not ret:
-
             break
 
 
         # ----------------------------------------------------
-        # YOLO
+        # YOLO PREDICTION
         # ----------------------------------------------------
 
         results = model.predict(
-
             source=frame,
-
             conf=0.20,
-
             verbose=False
-
         )
 
         result = results[0]
@@ -1047,7 +1044,7 @@ def process_video(
 
 
         # ----------------------------------------------------
-        # COUNT
+        # COUNT DETECTIONS
         # ----------------------------------------------------
 
         if status == "GARBAGE OVERFLOW":
@@ -1059,6 +1056,7 @@ def process_video(
             if confidence > best_overflow_confidence:
 
                 best_overflow_confidence = confidence
+
 
         elif status == "NORMAL":
 
@@ -1081,111 +1079,66 @@ def process_video(
         if status == "GARBAGE OVERFLOW":
 
             cv2.rectangle(
-
                 annotated_frame,
-
                 (10, 10),
-
                 (520, 80),
-
                 (0, 0, 255),
-
                 -1
-
             )
 
             cv2.putText(
-
                 annotated_frame,
-
                 "GARBAGE OVERFLOW DETECTED",
-
                 (25, 55),
-
                 cv2.FONT_HERSHEY_SIMPLEX,
-
                 0.80,
-
                 (255, 255, 255),
-
                 2,
-
                 cv2.LINE_AA
-
             )
 
 
         elif status == "NORMAL":
 
             cv2.rectangle(
-
                 annotated_frame,
-
                 (10, 10),
-
                 (300, 80),
-
                 (0, 150, 0),
-
                 -1
-
             )
 
             cv2.putText(
-
                 annotated_frame,
-
                 "NORMAL",
-
                 (25, 55),
-
                 cv2.FONT_HERSHEY_SIMPLEX,
-
                 0.80,
-
                 (255, 255, 255),
-
                 2,
-
                 cv2.LINE_AA
-
             )
 
 
         else:
 
             cv2.rectangle(
-
                 annotated_frame,
-
                 (10, 10),
-
                 (370, 80),
-
                 (80, 80, 80),
-
                 -1
-
             )
 
             cv2.putText(
-
                 annotated_frame,
-
                 "NO CLEAR DETECTION",
-
                 (25, 55),
-
                 cv2.FONT_HERSHEY_SIMPLEX,
-
                 0.70,
-
                 (255, 255, 255),
-
                 2,
-
                 cv2.LINE_AA
-
             )
 
 
@@ -1196,23 +1149,14 @@ def process_video(
         if confidence > 0:
 
             cv2.putText(
-
                 annotated_frame,
-
                 f"Confidence: {confidence * 100:.2f}%",
-
                 (15, height - 20),
-
                 cv2.FONT_HERSHEY_SIMPLEX,
-
                 0.65,
-
                 (255, 255, 255),
-
                 2,
-
                 cv2.LINE_AA
-
             )
 
 
@@ -1234,15 +1178,10 @@ def process_video(
         if total_frames > 0:
 
             progress.progress(
-
                 min(
-
                     frame_number / total_frames,
-
                     1.0
-
                 )
-
             )
 
 
@@ -1299,19 +1238,16 @@ def process_video(
 
         ]
 
+
         subprocess.run(
-
             command,
-
             stdout=subprocess.PIPE,
-
             stderr=subprocess.PIPE,
-
             check=True
-
         )
 
         final_video_path = h264_output_path
+
 
     except Exception:
 
@@ -1325,16 +1261,14 @@ def process_video(
     try:
 
         with open(
-
             final_video_path,
-
             "rb"
-
         ) as video_file:
 
             output_video_bytes = (
                 video_file.read()
             )
+
 
     except Exception:
 
@@ -1355,6 +1289,7 @@ def process_video(
                 raw_output_path
             )
 
+
         if os.path.exists(
             h264_output_path
         ):
@@ -1363,49 +1298,38 @@ def process_video(
                 h264_output_path
             )
 
+
     except Exception:
 
         pass
 
 
     # ========================================================
-    # FINAL RESULT
+    # FINAL VIDEO RESULT
     # ========================================================
 
     if detection_count == 0:
 
         return (
-
             "NO CLEAR DETECTION",
-
             output_video_bytes,
-
             0.0
-
         )
 
 
     if overflow_count > 0:
 
         return (
-
             "GARBAGE OVERFLOW",
-
             output_video_bytes,
-
             best_overflow_confidence
-
         )
 
 
     return (
-
         "NORMAL",
-
         output_video_bytes,
-
         0.0
-
     )
 
 
@@ -1416,48 +1340,40 @@ def process_video(
 if st.session_state.page == "home":
 
     st.markdown(
-
         '<div class="main-title">'
         '♻️ EcoBin AI – Smart Garbage Overflow Detection'
         '</div>',
-
         unsafe_allow_html=True
-
     )
 
 
     left_col, right_col = st.columns(
-
         [0.38, 0.62],
-
         gap="large"
-
     )
 
+
+    # ========================================================
+    # LEFT
+    # ========================================================
 
     with left_col:
 
         st.markdown(
-
             '<div class="aicw-text">'
             'AI Career for Women'
             '<br>'
             '(AICW)'
             '</div>',
-
             unsafe_allow_html=True
-
         )
 
 
         st.markdown(
-
             '<div class="capstone-text">'
             'Capstone Project'
             '</div>',
-
             unsafe_allow_html=True
-
         )
 
 
@@ -1465,13 +1381,9 @@ if st.session_state.page == "home":
 
 
         if st.button(
-
             "🔍  PREDICT",
-
             key="predict",
-
             use_container_width=True
-
         ):
 
             st.session_state.page = "predict"
@@ -1479,16 +1391,17 @@ if st.session_state.page == "home":
             st.rerun()
 
 
+    # ========================================================
+    # RIGHT
+    # ========================================================
+
     with right_col:
 
         st.markdown(
-
             '<div class="description-title">'
             'Project Description'
             '</div>',
-
             unsafe_allow_html=True
-
         )
 
 
@@ -1497,7 +1410,6 @@ if st.session_state.page == "home":
         ):
 
             st.markdown(
-
                 """
                 EcoBin AI is an AI-powered Smart Garbage Overflow
                 Detection System designed to automatically identify
@@ -1512,22 +1424,15 @@ if st.session_state.page == "home":
 
                 When an overflow condition is detected, EcoBin AI
                 automatically generates an alert containing the
-                location, date and time, confidence, and violation
-                status. The alert is also sent to the configured
-                user's email address.
-
-                The system uses event-based alerting to prevent
-                repeated email notifications for the same uploaded
-                input while allowing a new alert for a new
-                detection event.
+                location, date and time, and violation status.
+                The alert is also sent to the configured user's
+                email address.
 
                 This system helps reduce manual monitoring effort,
                 support faster waste-management response, and
                 improve cleanliness in public and residential areas.
                 """,
-
                 unsafe_allow_html=True
-
             )
 
 
@@ -1535,12 +1440,13 @@ if st.session_state.page == "home":
     st.write("")
 
 
+    # ========================================================
+    # TEAM SECTION
+    # ========================================================
+
     team_col, gmail_col, guide_col = st.columns(
-
         [1.25, 1.25, 0.75],
-
         gap="large"
-
     )
 
 
@@ -1551,17 +1457,14 @@ if st.session_state.page == "home":
         ):
 
             st.markdown(
-
                 '<div class="card-heading">'
                 'TEAM MEMBERS'
                 '</div>',
-
                 unsafe_allow_html=True
-
             )
 
-            st.markdown(
 
+            st.markdown(
                 """
                 <div class="card-text">
 
@@ -1572,9 +1475,7 @@ if st.session_state.page == "home":
 
                 </div>
                 """,
-
                 unsafe_allow_html=True
-
             )
 
 
@@ -1585,17 +1486,14 @@ if st.session_state.page == "home":
         ):
 
             st.markdown(
-
                 '<div class="card-heading">'
                 'GMAIL'
                 '</div>',
-
                 unsafe_allow_html=True
-
             )
 
-            st.markdown(
 
+            st.markdown(
                 """
                 <div class="card-text">
 
@@ -1606,9 +1504,7 @@ if st.session_state.page == "home":
 
                 </div>
                 """,
-
                 unsafe_allow_html=True
-
             )
 
 
@@ -1619,56 +1515,49 @@ if st.session_state.page == "home":
         ):
 
             st.markdown(
-
                 '<div class="card-heading">'
                 'GUIDE NAME'
                 '</div>',
-
                 unsafe_allow_html=True
-
             )
 
-            st.markdown(
 
+            st.markdown(
                 '<div class="card-text">'
                 'MD.Abdul Aziz'
                 '</div>',
-
                 unsafe_allow_html=True
-
             )
+
 
             st.write("")
 
-            st.markdown(
 
+            st.markdown(
                 '<div class="card-heading">'
                 'Designation'
                 '</div>',
-
                 unsafe_allow_html=True
-
             )
 
-            st.markdown(
 
+            st.markdown(
                 '<div class="card-text">'
                 'Trainer, Co-Lead-AICW'
                 '</div>',
-
                 unsafe_allow_html=True
-
             )
 
 
-    st.markdown(
+    # ========================================================
+    # FOOTER
+    # ========================================================
 
+    st.markdown(
         '<div class="footer-text">'
         'EcoBin AI – Smart Garbage Overflow Detection'
         '</div>',
-
         unsafe_allow_html=True
-
     )
 
 
@@ -1679,33 +1568,28 @@ if st.session_state.page == "home":
 else:
 
     st.markdown(
-
         '<div class="detect-title">'
         '♻️ EcoBin AI'
         '</div>',
-
         unsafe_allow_html=True
-
     )
 
 
     st.markdown(
-
         '<div class="detect-subtitle">'
         'AI-Powered Smart Garbage Overflow Detection System'
         '</div>',
-
         unsafe_allow_html=True
-
     )
 
 
+    # ========================================================
+    # BACK BUTTON
+    # ========================================================
+
     if st.button(
-
         "← Back to Home",
-
         key="back"
-
     ):
 
         st.session_state.page = "home"
@@ -1742,22 +1626,16 @@ else:
     # ========================================================
 
     st.markdown(
-
         '<div class="detection-box-title">'
         '🖼️ Image Detection'
         '</div>',
-
         unsafe_allow_html=True
-
     )
 
 
     image_upload_col, image_input_col, image_output_col = st.columns(
-
         3,
-
         gap="medium"
-
     )
 
 
@@ -1772,30 +1650,21 @@ else:
         ):
 
             st.markdown(
-
                 '<div class="detection-box-title">'
                 'Upload Image'
                 '</div>',
-
                 unsafe_allow_html=True
-
             )
 
 
             uploaded_image = st.file_uploader(
-
                 "Choose image",
-
                 type=[
-
                     "jpg",
                     "jpeg",
                     "png"
-
                 ],
-
                 key="image_upload"
-
             )
 
 
@@ -1810,13 +1679,10 @@ else:
         ):
 
             st.markdown(
-
                 '<div class="detection-box-title">'
                 'Input'
                 '</div>',
-
                 unsafe_allow_html=True
-
             )
 
 
@@ -1831,12 +1697,10 @@ else:
 
 
                 st.image(
-
                     input_image,
-
                     use_container_width=True
-
                 )
+
 
             else:
 
@@ -1856,81 +1720,50 @@ else:
         ):
 
             st.markdown(
-
                 '<div class="detection-box-title">'
                 'Output'
                 '</div>',
-
                 unsafe_allow_html=True
-
             )
 
 
             if uploaded_image and input_image is not None:
 
                 if st.button(
-
                     "🔍 Detect",
-
                     key="detect_image",
-
                     use_container_width=True
-
                 ):
 
                     with st.spinner(
-
                         "AI is analyzing the image..."
-
                     ):
 
                         result, detections = predict_image(
-
                             input_image,
-
                             model
-
                         )
 
 
                     st.session_state.image_result = (
-
                         result,
-
                         detections
-
                     )
 
 
                 if st.session_state.image_result is not None:
 
                     result, detections = (
-
                         st.session_state.image_result
-
-                    )
-
-
-                    # Create event ID from image
-                    image_bytes = uploaded_image.getvalue()
-
-                    image_event_id = create_event_id(
-                        "image",
-                        image_bytes
                     )
 
 
                     display_prediction(
-
                         result,
-
                         detections,
-
-                        "Prediction Result",
-
-                        image_event_id
-
+                        "Prediction Result"
                     )
+
 
             else:
 
@@ -1947,27 +1780,21 @@ else:
 
 
     st.markdown(
-
         '<div class="detection-box-title">'
         '📷 Camera Detection'
         '</div>',
-
         unsafe_allow_html=True
-
     )
 
 
     camera_col, camera_input_col, camera_output_col = st.columns(
-
         3,
-
         gap="medium"
-
     )
 
 
     # ========================================================
-    # CAMERA
+    # CAMERA INPUT
     # ========================================================
 
     with camera_col:
@@ -1977,27 +1804,21 @@ else:
         ):
 
             st.markdown(
-
                 '<div class="detection-box-title">'
                 'Camera'
                 '</div>',
-
                 unsafe_allow_html=True
-
             )
 
 
             camera_image = st.camera_input(
-
                 "Capture Image",
-
                 key="camera"
-
             )
 
 
     # ========================================================
-    # CAMERA INPUT
+    # CAMERA PREVIEW
     # ========================================================
 
     with camera_input_col:
@@ -2007,13 +1828,10 @@ else:
         ):
 
             st.markdown(
-
                 '<div class="detection-box-title">'
                 'Input'
                 '</div>',
-
                 unsafe_allow_html=True
-
             )
 
 
@@ -2023,19 +1841,15 @@ else:
             if camera_image:
 
                 camera_pil = Image.open(
-
                     camera_image
-
                 ).convert("RGB")
 
 
                 st.image(
-
                     camera_pil,
-
                     use_container_width=True
-
                 )
+
 
             else:
 
@@ -2055,80 +1869,50 @@ else:
         ):
 
             st.markdown(
-
                 '<div class="detection-box-title">'
                 'Output'
                 '</div>',
-
                 unsafe_allow_html=True
-
             )
 
 
             if camera_image and camera_pil is not None:
 
                 if st.button(
-
                     "🔍 Detect",
-
                     key="detect_camera",
-
                     use_container_width=True
-
                 ):
 
                     with st.spinner(
-
                         "Analyzing camera image..."
-
                     ):
 
                         result, detections = predict_image(
-
                             camera_pil,
-
                             model
-
                         )
 
 
                     st.session_state.camera_result = (
-
                         result,
-
                         detections
-
                     )
 
 
                 if st.session_state.camera_result is not None:
 
                     result, detections = (
-
                         st.session_state.camera_result
-
-                    )
-
-
-                    camera_bytes = camera_image.getvalue()
-
-                    camera_event_id = create_event_id(
-                        "camera",
-                        camera_bytes
                     )
 
 
                     display_prediction(
-
                         result,
-
                         detections,
-
-                        "Camera Prediction",
-
-                        camera_event_id
-
+                        "Camera Prediction"
                     )
+
 
             else:
 
@@ -2146,22 +1930,16 @@ else:
 
 
     st.markdown(
-
         '<div class="detection-box-title">'
         '🎥 Video / CCTV Detection'
         '</div>',
-
         unsafe_allow_html=True
-
     )
 
 
     video_upload_col, video_input_col, video_output_col = st.columns(
-
         3,
-
         gap="medium"
-
     )
 
 
@@ -2176,32 +1954,23 @@ else:
         ):
 
             st.markdown(
-
                 '<div class="detection-box-title">'
                 'Upload Video'
                 '</div>',
-
                 unsafe_allow_html=True
-
             )
 
 
             uploaded_video = st.file_uploader(
-
                 "Choose video",
-
                 type=[
-
                     "mp4",
                     "avi",
                     "mov",
                     "mkv",
                     "mpeg"
-
                 ],
-
                 key="video_upload"
-
             )
 
 
@@ -2216,13 +1985,10 @@ else:
         ):
 
             st.markdown(
-
                 '<div class="detection-box-title">'
                 'Input'
                 '</div>',
-
                 unsafe_allow_html=True
-
             )
 
 
@@ -2231,6 +1997,7 @@ else:
                 st.video(
                     uploaded_video
                 )
+
 
             else:
 
@@ -2250,44 +2017,23 @@ else:
         ):
 
             st.markdown(
-
                 '<div class="detection-box-title">'
                 'Output'
                 '</div>',
-
                 unsafe_allow_html=True
-
             )
 
 
             if uploaded_video:
 
                 # ------------------------------------------------
-                # VIDEO EVENT ID
-                # ------------------------------------------------
-
-                video_bytes_for_id = (
-                    uploaded_video.getvalue()
-                )
-
-                video_event_id = create_event_id(
-                    "video",
-                    video_bytes_for_id
-                )
-
-
-                # ------------------------------------------------
                 # ANALYZE VIDEO
                 # ------------------------------------------------
 
                 if st.button(
-
                     "🎥 Analyze Video",
-
                     key="detect_video",
-
                     use_container_width=True
-
                 ):
 
                     video_bytes = (
@@ -2296,11 +2042,8 @@ else:
 
 
                     temp_video = tempfile.NamedTemporaryFile(
-
                         delete=False,
-
                         suffix=".mp4"
-
                     )
 
 
@@ -2314,45 +2057,30 @@ else:
                     try:
 
                         with st.spinner(
-
                             "🤖 AI is analyzing CCTV video and generating output..."
-
                         ):
 
                             (
-
                                 video_status,
-
                                 output_video_bytes,
-
                                 video_conf
-
                             ) = process_video(
-
                                 temp_video.name,
-
                                 model
-
                             )
 
 
                         st.session_state.video_result = (
-
                             video_status,
-
                             output_video_bytes,
-
                             video_conf
-
                         )
 
 
                     except Exception as e:
 
                         st.error(
-
                             f"❌ Video processing failed: {e}"
-
                         )
 
 
@@ -2374,13 +2102,9 @@ else:
                 if st.session_state.video_result is not None:
 
                     (
-
                         video_status,
-
                         output_video_bytes,
-
                         video_conf
-
                     ) = st.session_state.video_result
 
 
@@ -2391,7 +2115,6 @@ else:
                     if output_video_bytes is not None:
 
                         st.markdown(
-
                             """
                             <div style="
                                 color:#17345f;
@@ -2402,15 +2125,14 @@ else:
                             🎬 AI Processed Output Video
                             </div>
                             """,
-
                             unsafe_allow_html=True
-
                         )
 
 
                         st.video(
                             output_video_bytes
                         )
+
 
                     else:
 
@@ -2420,19 +2142,18 @@ else:
 
 
                     # =================================================
-                    # OVERFLOW ALERT
+                    # VIDEO OVERFLOW ALERT
                     # =================================================
 
                     if video_status == "GARBAGE OVERFLOW":
 
                         st.markdown(
-
                             f"""
                             <div class="alert-box">
 
                             <h3>🚨 Garbage Overflow Detected</h3>
 
-                            <b>Detection:</b> overflow<br><br>
+                            <b>Detection:</b> overclass<br><br>
 
                             <b>Confidence:</b>
                             {video_conf * 100:.2f}%<br><br>
@@ -2448,44 +2169,21 @@ else:
 
                             </div>
                             """,
-
                             unsafe_allow_html=True
-
                         )
 
 
-                        # ------------------------------------------------
-                        # EVENT BASED EMAIL
-                        # ------------------------------------------------
-
-                        generate_alert(
-
-                            video_event_id,
-
-                            video_conf,
-
-                            "overflow"
-
-                        )
-
-
-                        # ------------------------------------------------
-                        # CLEAR EMAIL SUCCESS MESSAGE
-                        # ------------------------------------------------
-
-                        display_email_status(
-                            video_event_id
-                        )
+                        # SEND EMAIL
+                        generate_alert()
 
 
                     # =================================================
-                    # NORMAL
+                    # VIDEO NORMAL
                     # =================================================
 
                     elif video_status == "NORMAL":
 
                         st.markdown(
-
                             """
                             <div class="normal-box">
 
@@ -2496,9 +2194,7 @@ else:
 
                             </div>
                             """,
-
                             unsafe_allow_html=True
-
                         )
 
 
@@ -2509,11 +2205,10 @@ else:
                     else:
 
                         st.warning(
-
                             "⚠️ No clear garbage condition "
                             "was detected in the video."
-
                         )
+
 
             else:
 
