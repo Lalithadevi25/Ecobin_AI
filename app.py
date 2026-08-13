@@ -47,7 +47,7 @@ if "video_result" not in st.session_state:
 
 
 # ============================================================
-# PREMIUM ECOBIN AI CSS
+# PROFESSIONAL COLOR THEME
 # ============================================================
 
 st.markdown(
@@ -60,22 +60,31 @@ st.markdown(
 
 .stApp {
     background:
-        radial-gradient(circle at 10% 0%, rgba(20,184,166,0.10), transparent 28%),
-        radial-gradient(circle at 90% 5%, rgba(37,99,235,0.10), transparent 30%),
-        #f6f9fc !important;
+        linear-gradient(
+            135deg,
+            #f5fbf8 0%,
+            #eef7f4 45%,
+            #f8fafc 100%
+        );
 }
 
-/* Main content */
+
+/* ============================================================
+   MAIN CONTAINER
+   ============================================================ */
 
 .block-container {
-    max-width: 1450px;
-    padding-top: 32px;
-    padding-bottom: 40px;
-    padding-left: 5%;
-    padding-right: 5%;
+    max-width: 1400px;
+    padding-top: 28px;
+    padding-bottom: 35px;
+    padding-left: 6%;
+    padding-right: 6%;
 }
 
-/* Hide Streamlit default UI */
+
+/* ============================================================
+   HIDE STREAMLIT DEFAULT UI
+   ============================================================ */
 
 #MainMenu {
     visibility: hidden;
@@ -91,57 +100,32 @@ footer {
 
 
 /* ============================================================
-   HERO TITLE
+   MAIN TITLE
    ============================================================ */
 
 .main-title {
-    background: linear-gradient(
-        135deg,
-        #0f2a43 0%,
-        #14532d 48%,
-        #0f766e 100%
-    );
-
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-
-    background-clip: text;
-
-    font-size: 38px !important;
-    font-weight: 900 !important;
-    text-align: center;
-
-    letter-spacing: -0.8px;
-    margin-bottom: 38px;
-}
-
-
-.detect-title {
-    background: linear-gradient(
-        135deg,
-        #0f2a43,
-        #0f766e,
-        #16a34a
-    );
-
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-
-    background-clip: text;
-
+    color: #12372a !important;
     font-size: 34px !important;
     font-weight: 900 !important;
     text-align: center;
+    margin-bottom: 34px;
+    letter-spacing: 0.2px;
+}
 
-    margin-bottom: 4px;
+.detect-title {
+    color: #12372a !important;
+    font-size: 34px !important;
+    font-weight: 900 !important;
+    text-align: center;
+    margin-bottom: 5px;
 }
 
 .detect-subtitle {
-    color: #64748b !important;
+    color: #58736a !important;
     text-align: center;
     font-size: 15px;
     font-weight: 500;
-    margin-bottom: 28px;
+    margin-bottom: 25px;
 }
 
 
@@ -150,24 +134,24 @@ footer {
    ============================================================ */
 
 .aicw-text {
-    color: #0f2a43 !important;
-    font-size: 27px !important;
+    color: #155e45 !important;
+    font-size: 26px !important;
     font-weight: 900 !important;
     line-height: 1.5;
 }
 
 .capstone-text {
-    color: #0f766e !important;
-    font-size: 21px !important;
+    color: #344b43 !important;
+    font-size: 22px !important;
     font-weight: 800 !important;
-    margin-top: 34px;
+    margin-top: 42px;
 }
 
 .description-title {
-    color: #0f2a43 !important;
+    color: #12372a !important;
     font-size: 24px !important;
     font-weight: 900 !important;
-    margin-bottom: 14px;
+    margin-bottom: 12px;
 }
 
 
@@ -177,28 +161,23 @@ footer {
 
 .description-box {
     background: #ffffff;
-    border: 1px solid #dce7e5;
-    border-radius: 18px;
+    border: 1px solid #d7e8e0;
+    border-radius: 16px;
     padding: 24px;
-
-    color: #334155 !important;
-
+    color: #334740 !important;
     font-size: 15px;
-    line-height: 1.8;
-
-    box-shadow:
-        0 10px 30px rgba(15,42,67,0.06);
+    line-height: 1.75;
 }
 
 
 /* ============================================================
-   ALL NORMAL TEXT
+   GENERAL TEXT
    ============================================================ */
 
 .stMarkdown,
 .stMarkdown p,
 .stMarkdown li {
-    color: #334155;
+    color: #334740;
 }
 
 
@@ -207,21 +186,12 @@ footer {
    ============================================================ */
 
 div[data-testid="stVerticalBlockBorderWrapper"] {
-
-    background: rgba(255,255,255,0.96) !important;
-
-    border: 1px solid #dbe7e5 !important;
-
+    background: rgba(255, 255, 255, 0.96) !important;
+    border: 1px solid #d7e8e0 !important;
     border-radius: 18px !important;
-
     box-shadow:
-        0 8px 25px rgba(15,42,67,0.055);
-
+        0 5px 18px rgba(21, 94, 69, 0.07) !important;
     padding: 10px !important;
-
-    transition:
-        transform 0.2s ease,
-        box-shadow 0.2s ease;
 }
 
 
@@ -230,34 +200,17 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
    ============================================================ */
 
 .card-heading {
-    color: #0f2a43 !important;
+    color: #155e45 !important;
     font-size: 15px !important;
     font-weight: 900 !important;
     margin-bottom: 16px;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.4px;
 }
 
 .card-text {
-    color: #475569 !important;
+    color: #4b625a !important;
     font-size: 14px !important;
-    line-height: 2.15 !important;
-}
-
-
-/* ============================================================
-   DETECTION TITLES
-   ============================================================ */
-
-.detection-box-title {
-    color: #0f2a43 !important;
-
-    font-size: 18px !important;
-
-    font-weight: 900 !important;
-
-    margin-bottom: 12px;
-
-    letter-spacing: 0.1px;
+    line-height: 2.2 !important;
 }
 
 
@@ -266,117 +219,66 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
    ============================================================ */
 
 div.stButton > button {
-
     width: 100%;
-
-    min-height: 46px;
+    min-height: 45px;
 
     background:
         linear-gradient(
             135deg,
-            #0f766e,
-            #0d9488
+            #176b4f,
+            #238b68
         ) !important;
 
-    color: white !important;
+    color: #ffffff !important;
 
     border: none !important;
-
     border-radius: 10px !important;
 
     font-size: 14px !important;
-
     font-weight: 800 !important;
 
-    letter-spacing: 0.2px;
-
     box-shadow:
-        0 6px 15px rgba(13,148,136,0.20);
+        0 5px 12px rgba(23, 107, 79, 0.18) !important;
 
-    transition:
-        transform 0.15s ease,
-        box-shadow 0.15s ease;
+    transition: all 0.2s ease !important;
 }
 
-
 div.stButton > button:hover {
-
     background:
         linear-gradient(
             135deg,
-            #0f766e,
-            #059669
+            #11543e,
+            #176b4f
         ) !important;
 
-    color: white !important;
+    color: #ffffff !important;
 
-    border: none !important;
-
-    transform: translateY(-2px);
+    transform: translateY(-1px);
 
     box-shadow:
-        0 9px 22px rgba(13,148,136,0.28);
-}
-
-
-div.stButton > button:active {
-    transform: translateY(0px);
+        0 7px 16px rgba(23, 107, 79, 0.25) !important;
 }
 
 
 /* ============================================================
-   BACK BUTTON
+   LABELS
    ============================================================ */
 
-div.stButton > button[kind="secondary"] {
-    background: #ffffff !important;
-    color: #0f2a43 !important;
-    border: 1px solid #cbd5e1 !important;
-    box-shadow: none !important;
+label {
+    color: #29463d !important;
+    font-weight: 600 !important;
 }
 
 
 /* ============================================================
-   FILE UPLOADER
+   DETECTION HEADINGS
    ============================================================ */
 
-section[data-testid="stFileUploaderDropzone"] {
-
-    background:
-        linear-gradient(
-            145deg,
-            #f8fffe,
-            #f1f9f7
-        ) !important;
-
-    border: 2px dashed #8acdc4 !important;
-
-    border-radius: 14px !important;
-}
-
-
-section[data-testid="stFileUploaderDropzone"]:hover {
-
-    border-color: #0f766e !important;
-
-    background: #ecfdf5 !important;
-}
-
-
-/* File uploader text */
-
-section[data-testid="stFileUploaderDropzone"] * {
-    color: #334155 !important;
-}
-
-
-/* ============================================================
-   CAMERA
-   ============================================================ */
-
-div[data-testid="stCameraInput"] {
-
-    border-radius: 14px !important;
+.detection-box-title {
+    color: #155e45 !important;
+    font-size: 18px !important;
+    font-weight: 900 !important;
+    margin-bottom: 12px;
 }
 
 
@@ -385,34 +287,30 @@ div[data-testid="stCameraInput"] {
    ============================================================ */
 
 .alert-box {
-
     background:
         linear-gradient(
             135deg,
             #fff7f7,
-            #fff1f2
+            #fff0f1
         );
 
-    border: 2px solid #f87171;
+    border: 2px solid #ef5350;
 
-    border-left: 6px solid #dc2626;
-
-    border-radius: 16px;
+    border-radius: 15px;
 
     padding: 20px;
 
-    margin-top: 12px;
+    margin-top: 10px;
 
-    color: #7f1d1d !important;
+    color: #8f2525 !important;
 
     box-shadow:
-        0 8px 25px rgba(220,38,38,0.08);
+        0 5px 15px rgba(239, 83, 80, 0.10);
 }
 
 .alert-box h3 {
-    color: #b91c1c !important;
+    color: #b42318 !important;
     margin-top: 0;
-    font-weight: 900;
 }
 
 
@@ -421,161 +319,74 @@ div[data-testid="stCameraInput"] {
    ============================================================ */
 
 .normal-box {
-
     background:
         linear-gradient(
             135deg,
-            #f0fdf4,
-            #ecfdf5
+            #f0fff7,
+            #e8faf1
         );
 
-    border: 2px solid #4ade80;
+    border: 2px solid #27ae70;
 
-    border-left: 6px solid #16a34a;
-
-    border-radius: 16px;
+    border-radius: 15px;
 
     padding: 20px;
 
-    margin-top: 12px;
+    margin-top: 10px;
 
-    color: #14532d !important;
+    color: #17643f !important;
 
     box-shadow:
-        0 8px 25px rgba(22,163,74,0.08);
+        0 5px 15px rgba(39, 174, 112, 0.10);
 }
 
 .normal-box h3 {
-    color: #15803d !important;
+    color: #137a4b !important;
     margin-top: 0;
-    font-weight: 900;
 }
 
 
 /* ============================================================
-   EMAIL SUCCESS BOX
+   INPUT / UPLOAD AREA
    ============================================================ */
 
-.email-success {
-
-    background:
-        linear-gradient(
-            135deg,
-            #ecfdf5 0%,
-            #dcfce7 100%
-        );
-
-    border: 2px solid #22c55e;
-
-    border-left: 6px solid #15803d;
-
-    border-radius: 16px;
-
-    padding: 20px;
-
-    margin-top: 16px;
-
-    margin-bottom: 12px;
-
-    width: 100%;
-
-    box-sizing: border-box;
-
-    text-align: center;
-
-    box-shadow:
-        0 8px 25px rgba(22,163,74,0.10);
+[data-testid="stFileUploader"] {
+    background: #f8fcfa !important;
+    border-radius: 12px !important;
 }
 
-.email-success-title {
-
-    color: #166534 !important;
-
-    font-size: 18px !important;
-
-    font-weight: 900 !important;
-
-    margin: 0 0 8px 0 !important;
-
-    line-height: 1.4 !important;
-}
-
-.email-success-text {
-
-    color: #15803d !important;
-
-    font-size: 14px !important;
-
-    font-weight: 600 !important;
-
-    margin: 0 !important;
-
-    line-height: 1.6 !important;
+[data-testid="stFileUploaderDropzone"] {
+    background: #f8fcfa !important;
+    border: 1.5px dashed #9bcbb8 !important;
+    border-radius: 12px !important;
 }
 
 
 /* ============================================================
-   EMAIL ERROR
+   CAMERA
    ============================================================ */
 
-.email-error {
-
-    background:
-        linear-gradient(
-            135deg,
-            #fff1f2,
-            #fef2f2
-        );
-
-    border: 2px solid #f87171;
-
-    border-left: 6px solid #dc2626;
-
-    border-radius: 14px;
-
-    padding: 16px;
-
-    margin-top: 12px;
-
-    color: #991b1b !important;
-
-    font-weight: 700 !important;
+[data-testid="stCameraInput"] {
+    border-radius: 12px !important;
+    overflow: hidden;
 }
 
 
 /* ============================================================
-   WARNING
+   VIDEO
+   ============================================================ */
+
+video {
+    border-radius: 12px !important;
+}
+
+
+/* ============================================================
+   SUCCESS MESSAGE
    ============================================================ */
 
 div[data-testid="stAlert"] {
-
-    border-radius: 12px !important;
-}
-
-
-/* ============================================================
-   PROGRESS BAR
-   ============================================================ */
-
-div[data-testid="stProgressBar"] > div > div {
-
-    background:
-        linear-gradient(
-            90deg,
-            #0f766e,
-            #16a34a
-        ) !important;
-}
-
-
-/* ============================================================
-   VIDEO / IMAGE
-   ============================================================ */
-
-.stImage,
-video {
-
-    border-radius: 12px !important;
+    border-radius: 14px !important;
 }
 
 
@@ -584,38 +395,11 @@ video {
    ============================================================ */
 
 .footer-text {
-
     text-align: center;
-
-    color: #64748b;
-
-    margin-top: 40px;
-
+    color: #668078;
+    margin-top: 38px;
     font-size: 13px;
-
     font-weight: 500;
-}
-
-
-/* ============================================================
-   DIVIDER
-   ============================================================ */
-
-hr {
-
-    border: none !important;
-
-    height: 1px !important;
-
-    background:
-        linear-gradient(
-            90deg,
-            transparent,
-            #cbd5e1,
-            transparent
-        ) !important;
-
-    margin: 25px 0 !important;
 }
 
 
@@ -626,33 +410,23 @@ hr {
 @media(max-width: 900px) {
 
     .block-container {
-        padding-left: 4%;
-        padding-right: 4%;
+        padding-left: 5%;
+        padding-right: 5%;
     }
 
-    .main-title {
-        font-size: 27px !important;
-    }
-
+    .main-title,
     .detect-title {
-        font-size: 27px !important;
+        font-size: 25px !important;
     }
 
     .aicw-text {
-        font-size: 22px !important;
+        font-size: 21px !important;
     }
 
     .capstone-text {
         font-size: 19px !important;
     }
 
-    .email-success-title {
-        font-size: 16px !important;
-    }
-
-    .email-success-text {
-        font-size: 13px !important;
-    }
 }
 
 </style>
@@ -777,9 +551,8 @@ This alert was automatically generated by EcoBin AI.
 
     except Exception as e:
 
-        st.markdown(
-            f"""<div class="email-error">❌ Email alert failed: {str(e)}</div>""",
-            unsafe_allow_html=True
+        st.error(
+            f"❌ Email alert failed: {str(e)}"
         )
 
         return False
@@ -806,24 +579,22 @@ def generate_alert():
         ).total_seconds()
 
         if difference < 300:
+
             return
 
-    # Send email
-
     email_sent = send_email_alert()
-
-    # Success
 
     if email_sent:
 
         st.session_state.last_alert_time = current_dt
 
-        # One-line HTML prevents Streamlit from
-        # interpreting the inner content as code.
+        # Native Streamlit success box.
+        # This avoids the previous HTML rendering problem.
 
-        st.markdown(
-            """<div class="email-success"><div class="email-success-title">📧 ALERT EMAIL SENT SUCCESSFULLY</div><div class="email-success-text">The garbage overflow alert has been successfully sent to the configured email address.</div></div>""",
-            unsafe_allow_html=True
+        st.success(
+            "📧 ALERT EMAIL SENT SUCCESSFULLY\n\n"
+            "The garbage overflow alert has been "
+            "successfully sent to the configured email address."
         )
 
 
@@ -979,7 +750,11 @@ def display_prediction(
 ):
 
     st.markdown(
-        f"""<div class="detection-box-title">{title}</div>""",
+        f"""
+<div class="detection-box-title">
+    {title}
+</div>
+""",
         unsafe_allow_html=True
     )
 
@@ -1005,6 +780,7 @@ def display_prediction(
         st.markdown(
             f"""
 <div class="alert-box">
+
 <h3>🚨 Garbage Overflow Detected</h3>
 
 <b>Detection:</b> overclass<br><br>
@@ -1020,6 +796,7 @@ def display_prediction(
 
 <b>⚠️ Status:</b>
 Violation Detected
+
 </div>
 """,
             unsafe_allow_html=True
@@ -1036,6 +813,7 @@ Violation Detected
         st.markdown(
             f"""
 <div class="normal-box">
+
 <h3>✅ No Garbage Overflow Detected</h3>
 
 <b>Detection:</b> normal<br><br>
@@ -1045,13 +823,14 @@ Violation Detected
 
 <b>Status:</b>
 Normal
+
 </div>
 """,
             unsafe_allow_html=True
         )
 
     # ========================================================
-    # NO CLEAR
+    # NO DETECTION
     # ========================================================
 
     else:
@@ -1124,6 +903,10 @@ def process_video(video_path, model):
         )
     )
 
+    # ========================================================
+    # TEMP OUTPUT
+    # ========================================================
+
     raw_output = tempfile.NamedTemporaryFile(
         delete=False,
         suffix=".mp4"
@@ -1139,6 +922,10 @@ def process_video(video_path, model):
 
     h264_output_path = h264_output.name
     h264_output.close()
+
+    # ========================================================
+    # VIDEO WRITER
+    # ========================================================
 
     fourcc = cv2.VideoWriter_fourcc(
         *"mp4v"
@@ -1162,7 +949,7 @@ def process_video(video_path, model):
     progress = st.progress(0)
 
     # ========================================================
-    # FRAME PROCESSING
+    # PROCESS EVERY FRAME
     # ========================================================
 
     while True:
@@ -1213,7 +1000,7 @@ def process_video(video_path, model):
         annotated_frame = result.plot()
 
         # ====================================================
-        # STATUS
+        # OVERFLOW OVERLAY
         # ====================================================
 
         if status == "GARBAGE OVERFLOW":
@@ -1221,8 +1008,8 @@ def process_video(video_path, model):
             cv2.rectangle(
                 annotated_frame,
                 (10, 10),
-                (540, 80),
-                (0, 0, 220),
+                (520, 80),
+                (0, 0, 180),
                 -1
             )
 
@@ -1237,13 +1024,17 @@ def process_video(video_path, model):
                 cv2.LINE_AA
             )
 
+        # ====================================================
+        # NORMAL OVERLAY
+        # ====================================================
+
         elif status == "NORMAL":
 
             cv2.rectangle(
                 annotated_frame,
                 (10, 10),
                 (300, 80),
-                (0, 140, 0),
+                (0, 130, 70),
                 -1
             )
 
@@ -1258,12 +1049,16 @@ def process_video(video_path, model):
                 cv2.LINE_AA
             )
 
+        # ====================================================
+        # NO DETECTION
+        # ====================================================
+
         else:
 
             cv2.rectangle(
                 annotated_frame,
                 (10, 10),
-                (390, 80),
+                (370, 80),
                 (70, 70, 70),
                 -1
             )
@@ -1296,11 +1091,19 @@ def process_video(video_path, model):
                 cv2.LINE_AA
             )
 
+        # ====================================================
+        # WRITE FRAME
+        # ====================================================
+
         writer.write(
             annotated_frame
         )
 
         frame_number += 1
+
+        # ====================================================
+        # PROGRESS
+        # ====================================================
 
         if total_frames > 0:
 
@@ -1317,7 +1120,6 @@ def process_video(video_path, model):
 
     cap.release()
     writer.release()
-
     progress.empty()
 
     # ========================================================
@@ -1331,7 +1133,9 @@ def process_video(video_path, model):
         command = [
 
             ffmpeg_path,
+
             "-y",
+
             "-i",
             raw_output_path,
 
@@ -1367,7 +1171,7 @@ def process_video(video_path, model):
         final_video_path = raw_output_path
 
     # ========================================================
-    # READ VIDEO
+    # READ OUTPUT
     # ========================================================
 
     try:
@@ -1389,28 +1193,18 @@ def process_video(video_path, model):
 
     try:
 
-        if os.path.exists(
-            raw_output_path
-        ):
+        if os.path.exists(raw_output_path):
+            os.remove(raw_output_path)
 
-            os.remove(
-                raw_output_path
-            )
-
-        if os.path.exists(
-            h264_output_path
-        ):
-
-            os.remove(
-                h264_output_path
-            )
+        if os.path.exists(h264_output_path):
+            os.remove(h264_output_path)
 
     except Exception:
 
         pass
 
     # ========================================================
-    # FINAL STATUS
+    # FINAL RESULT
     # ========================================================
 
     if detection_count == 0:
@@ -1485,7 +1279,7 @@ if st.session_state.page == "home":
         st.write("")
 
         if st.button(
-            "🔍  START PREDICTION",
+            "🔍  PREDICT",
             key="predict",
             use_container_width=True
         ):
@@ -1503,7 +1297,7 @@ if st.session_state.page == "home":
         st.markdown(
             """
 <div class="description-title">
-    🌱 Project Description
+    Project Description
 </div>
 """,
             unsafe_allow_html=True
@@ -1564,7 +1358,7 @@ improve cleanliness in public and residential areas.
             st.markdown(
                 """
 <div class="card-heading">
-    👥 TEAM MEMBERS
+    TEAM MEMBERS
 </div>
 """,
                 unsafe_allow_html=True
@@ -1585,7 +1379,7 @@ improve cleanliness in public and residential areas.
             )
 
     # ========================================================
-    # EMAIL
+    # GMAIL
     # ========================================================
 
     with gmail_col:
@@ -1597,7 +1391,7 @@ improve cleanliness in public and residential areas.
             st.markdown(
                 """
 <div class="card-heading">
-    ✉️ GMAIL
+    GMAIL
 </div>
 """,
                 unsafe_allow_html=True
@@ -1630,7 +1424,7 @@ nadimpallisushmasri29@gmail.com
             st.markdown(
                 """
 <div class="card-heading">
-    🎓 GUIDE NAME
+    GUIDE NAME
 </div>
 """,
                 unsafe_allow_html=True
@@ -1672,9 +1466,7 @@ nadimpallisushmasri29@gmail.com
     st.markdown(
         """
 <div class="footer-text">
-    ♻️ EcoBin AI – Smart Garbage Overflow Detection
-    <br>
-    AI-Powered Waste Management Solution
+    EcoBin AI – Smart Garbage Overflow Detection
 </div>
 """,
         unsafe_allow_html=True
@@ -1759,6 +1551,7 @@ else:
         gap="medium"
     )
 
+
     # ========================================================
     # IMAGE UPLOAD
     # ========================================================
@@ -1772,7 +1565,7 @@ else:
             st.markdown(
                 """
 <div class="detection-box-title">
-    📤 Upload Image
+    Upload Image
 </div>
 """,
                 unsafe_allow_html=True
@@ -1788,6 +1581,7 @@ else:
                 key="image_upload"
             )
 
+
     # ========================================================
     # IMAGE INPUT
     # ========================================================
@@ -1801,7 +1595,7 @@ else:
             st.markdown(
                 """
 <div class="detection-box-title">
-    📥 Input
+    Input
 </div>
 """,
                 unsafe_allow_html=True
@@ -1826,6 +1620,7 @@ else:
                     "Upload an image to start prediction."
                 )
 
+
     # ========================================================
     # IMAGE OUTPUT
     # ========================================================
@@ -1839,7 +1634,7 @@ else:
             st.markdown(
                 """
 <div class="detection-box-title">
-    🎯 Output
+    Output
 </div>
 """,
                 unsafe_allow_html=True
@@ -1854,7 +1649,7 @@ else:
                 ):
 
                     with st.spinner(
-                        "🤖 AI is analyzing the image..."
+                        "AI is analyzing the image..."
                     ):
 
                         result, detections = predict_image(
@@ -1906,6 +1701,7 @@ else:
         gap="medium"
     )
 
+
     # ========================================================
     # CAMERA
     # ========================================================
@@ -1919,7 +1715,7 @@ else:
             st.markdown(
                 """
 <div class="detection-box-title">
-    📷 Camera
+    Camera
 </div>
 """,
                 unsafe_allow_html=True
@@ -1929,6 +1725,7 @@ else:
                 "Capture Image",
                 key="camera"
             )
+
 
     # ========================================================
     # CAMERA INPUT
@@ -1943,7 +1740,7 @@ else:
             st.markdown(
                 """
 <div class="detection-box-title">
-    📥 Input
+    Input
 </div>
 """,
                 unsafe_allow_html=True
@@ -1968,6 +1765,7 @@ else:
                     "Camera image will appear here."
                 )
 
+
     # ========================================================
     # CAMERA OUTPUT
     # ========================================================
@@ -1981,7 +1779,7 @@ else:
             st.markdown(
                 """
 <div class="detection-box-title">
-    🎯 Output
+    Output
 </div>
 """,
                 unsafe_allow_html=True
@@ -1996,7 +1794,7 @@ else:
                 ):
 
                     with st.spinner(
-                        "🤖 Analyzing camera image..."
+                        "Analyzing camera image..."
                     ):
 
                         result, detections = predict_image(
@@ -2029,7 +1827,7 @@ else:
 
 
     # ========================================================
-    # VIDEO SECTION
+    # VIDEO / CCTV SECTION
     # ========================================================
 
     st.write("")
@@ -2049,6 +1847,7 @@ else:
         gap="medium"
     )
 
+
     # ========================================================
     # VIDEO UPLOAD
     # ========================================================
@@ -2062,7 +1861,7 @@ else:
             st.markdown(
                 """
 <div class="detection-box-title">
-    📤 Upload Video
+    Upload Video
 </div>
 """,
                 unsafe_allow_html=True
@@ -2080,6 +1879,7 @@ else:
                 key="video_upload"
             )
 
+
     # ========================================================
     # VIDEO INPUT
     # ========================================================
@@ -2093,7 +1893,7 @@ else:
             st.markdown(
                 """
 <div class="detection-box-title">
-    📥 Input
+    Input
 </div>
 """,
                 unsafe_allow_html=True
@@ -2111,6 +1911,7 @@ else:
                     "Upload a CCTV/video file."
                 )
 
+
     # ========================================================
     # VIDEO OUTPUT
     # ========================================================
@@ -2124,13 +1925,17 @@ else:
             st.markdown(
                 """
 <div class="detection-box-title">
-    🎯 Output
+    Output
 </div>
 """,
                 unsafe_allow_html=True
             )
 
             if uploaded_video:
+
+                # =================================================
+                # ANALYZE VIDEO
+                # =================================================
 
                 if st.button(
                     "🎥 Analyze Video",
@@ -2190,8 +1995,9 @@ else:
                                 temp_video.name
                             )
 
+
                 # =================================================
-                # DISPLAY RESULT
+                # DISPLAY VIDEO RESULT
                 # =================================================
 
                 if st.session_state.video_result is not None:
@@ -2202,6 +2008,7 @@ else:
                         video_conf
                     ) = st.session_state.video_result
 
+
                     # =================================================
                     # OUTPUT VIDEO
                     # =================================================
@@ -2210,7 +2017,12 @@ else:
 
                         st.markdown(
                             """
-<div class="detection-box-title">
+<div style="
+    color:#155e45;
+    font-size:16px;
+    font-weight:900;
+    margin-bottom:10px;
+">
     🎬 AI Processed Output Video
 </div>
 """,
@@ -2227,8 +2039,9 @@ else:
                             "❌ Output video could not be generated."
                         )
 
+
                     # =================================================
-                    # OVERFLOW
+                    # VIDEO OVERFLOW ALERT
                     # =================================================
 
                     if video_status == "GARBAGE OVERFLOW":
@@ -2260,8 +2073,9 @@ Violation Detected
 
                         generate_alert()
 
+
                     # =================================================
-                    # NORMAL
+                    # VIDEO NORMAL
                     # =================================================
 
                     elif video_status == "NORMAL":
@@ -2280,8 +2094,9 @@ Normal
                             unsafe_allow_html=True
                         )
 
+
                     # =================================================
-                    # NO CLEAR
+                    # NO CLEAR DETECTION
                     # =================================================
 
                     else:
