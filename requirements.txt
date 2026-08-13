@@ -3,4 +3,6 @@ ultralytics==8.3.170
 opencv-python-headless==4.10.0.84
 numpy==1.26.4
 pillow==11.3.0
-imageio-ffmpeg==0.6.0
+imageio-ffmpeg
+streamlit-geolocation
+requests
